@@ -1,0 +1,160 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Images">
+      <UniqueIdentifier>{7a68a50d-254a-4014-9419-20f0868256db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src">
+      <UniqueIdentifier>{56dd3107-78ff-4fac-a3e7-e28e799c5461}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Src\Core">
+      <UniqueIdentifier>{2b2e95e6-6a1f-4ff4-a8de-aac73f8f2b7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Map">
+      <UniqueIdentifier>{881664f0-cfc8-4537-8d91-f73d3dd6c286}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Game States">
+      <UniqueIdentifier>{0b335311-2215-42e0-ab2c-54aaf3174b99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Animation">
+      <UniqueIdentifier>{6c66e7ab-c643-4bd9-9319-177d027f1593}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Entity">
+      <UniqueIdentifier>{f8d80046-366c-41f4-b2de-ae09a5aa0993}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Entity\Actors">
+      <UniqueIdentifier>{66091e1e-bf35-454d-8f9a-cc24c7c54927}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Entity\Objects">
+      <UniqueIdentifier>{a70db22e-472b-4c19-95a1-879d73270a20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Entity\Actors\Player">
+      <UniqueIdentifier>{46b9d3a3-ff1f-4bee-a677-7257d436dff2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Ui">
+      <UniqueIdentifier>{9872383f-2d00-41d9-a75f-1d67e3fa844a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Ui\Buttons">
+      <UniqueIdentifier>{6743d2ba-cab0-494b-ab7f-a54ce06758e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Ui\Ui_Manager">
+      <UniqueIdentifier>{b3c93c76-d446-4d17-80aa-bcb97d6fb9d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Editor">
+      <UniqueIdentifier>{96ebe0f0-a211-440f-9d72-fbc7e4bf192b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Input handler">
+      <UniqueIdentifier>{c8d4c213-a189-43d8-a497-c828b2123bc0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Src\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="game.cpp">
+      <Filter>Src\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="map.cpp">
+      <Filter>Src\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="tile.cpp">
+      <Filter>Src\Map</Filter>
+    </ClCompile>
+    <ClCompile Include="texture_manager.cpp">
+      <Filter>Src\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="animation_handler.cpp">
+      <Filter>Src\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="game_state_start.cpp">
+      <Filter>Src\Game States</Filter>
+    </ClCompile>
+    <ClCompile Include="game_state_editor.cpp">
+      <Filter>Src\Game States</Filter>
+    </ClCompile>
+    <ClCompile Include="button.cpp">
+      <Filter>Src\Ui\Buttons</Filter>
+    </ClCompile>
+    <ClCompile Include="UIManager.cpp">
+      <Filter>Src\Ui\Ui_Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="tile_preview.cpp">
+      <Filter>Src\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="input_handler.cpp">
+      <Filter>Src\Input handler</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="game.hpp">
+      <Filter>Src\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="map.hpp">
+      <Filter>Src\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="tile.hpp">
+      <Filter>Src\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="texture_manager.hpp">
+      <Filter>Src\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="game_state_start.hpp">
+      <Filter>Src\Game States</Filter>
+    </ClInclude>
+    <ClInclude Include="game_state_editor.hpp">
+      <Filter>Src\Game States</Filter>
+    </ClInclude>
+    <ClInclude Include="game_state.hpp">
+      <Filter>Src\Game States</Filter>
+    </ClInclude>
+    <ClInclude Include="animation.hpp">
+      <Filter>Src\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="animation_handler.hpp">
+      <Filter>Src\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="button.hpp">
+      <Filter>Src\Ui\Buttons</Filter>
+    </ClInclude>
+    <ClInclude Include="UIManager.hpp">
+      <Filter>Src\Ui\Ui_Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="tile_preview.hpp">
+      <Filter>Src\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="input_handler.hpp">
+      <Filter>Src\Input handler</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\Users\leoma\Downloads\Default.jpg">
+      <Filter>Images</Filter>
+    </Image>
+    <Image Include="..\..\..\..\Users\leoma\Downloads\Empty.png">
+      <Filter>Images</Filter>
+    </Image>
+    <Image Include="..\..\..\..\Users\leoma\Desktop\Isometric_Pack00\isometric_grass.png">
+      <Filter>Images</Filter>
+    </Image>
+    <Image Include="..\..\..\..\Users\leoma\Downloads\isometric_block (13)_imresizer.jpg">
+      <Filter>Images</Filter>
+    </Image>
+    <Image Include="..\..\..\..\Users\leoma\Downloads\pxArt.png">
+      <Filter>Images</Filter>
+    </Image>
+    <Image Include="..\..\..\..\Users\leoma\Downloads\pxArt (1).png">
+      <Filter>Images</Filter>
+    </Image>
+    <Image Include="..\..\..\..\Users\leoma\Downloads\BlueBackground.png">
+      <Filter>Images</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
