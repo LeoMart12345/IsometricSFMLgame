@@ -4,9 +4,10 @@
 
 GameStateStart::GameStateStart(Game* game) : GameState(game)
 {
-    // Initialize any resources for the start state
- 
-
+    // Size and center the view to match the window.
+    const sf::Vector2f size = static_cast<sf::Vector2f>(this->game->window.getSize());
+    this->view.setSize(size);
+    this->view.setCenter(size * 0.5f);
 }
 
 void GameStateStart::draw(const float dt)

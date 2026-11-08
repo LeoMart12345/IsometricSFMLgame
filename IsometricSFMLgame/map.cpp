@@ -32,6 +32,8 @@ Map::Map(int width, int height, int layers, TextureManager& textureManager) :
 }
 
 void Map::draw(sf::RenderWindow& window) {
+    if (tiles.empty() || tiles[0].empty() || tiles[0][0].empty()) return;
+
     for (size_t z = 0; z < tiles[0][0].size(); ++z) {
         for (size_t y = 0; y < tiles[0].size(); ++y) {
             for (size_t x = 0; x < tiles.size(); ++x) {
@@ -45,6 +47,7 @@ void Map::draw(sf::RenderWindow& window) {
 }
 
 bool Map::isInBounds(int x, int y, int z) const {
+    if (tiles.empty() || tiles[0].empty() || tiles[0][0].empty()) return false;
     return x >= 0 && x < static_cast<int>(tiles.size()) &&
         y >= 0 && y < static_cast<int>(tiles[0].size()) &&
         z >= 0 && z < static_cast<int>(tiles[0][0].size());
@@ -58,8 +61,20 @@ sf::Vector2f Map::getScreenPos(int x, int y, int z) {
 }
 
 sf::Vector3i Map::screenToGrid(float screenX, float screenY, int currentZ) {
-    float gridX = (screenX / tileWidth + screenY / tileHeight);
-    float gridY = (screenY / tileHeight - screenX / tileWidth);
+    // Inverse of getScreenPos:
+    //   sx = (x - y) * tileWidth  / 2
+    //   sy = (x + y) * tileHeight / 2 - z * tileHeight / 2
+    // Solve for x, y:
+    //   x = sx / tileWidth  + sy / tileHeight
+    //   y = sy / tileHeight - sx / tileWidth
+    const float halfW = tileWidth  / 2.f;
+    const float halfH = tileHeight / 2.f;
+
+    const float adjustedY = screenY + currentZ * halfH;
+
+    const float gridX = (screenX / halfW + adjustedY / halfH) / 2.f;
+    const float gridY = (adjustedY / halfH - screenX / halfW) / 2.f;
+
     return {
         static_cast<int>(std::floor(gridX)),
         static_cast<int>(std::floor(gridY)),
@@ -82,25 +97,25 @@ void Map::placeTile(int x, int y, int z, TileType type) {
 }
 
 void Map::drawOutline(sf::RenderWindow& window) {
+    if (tiles.empty() || tiles[0].empty()) return;
+
+    const int width  = static_cast<int>(tiles.size());
+    const int height = static_cast<int>(tiles[0].size());
+    const sf::Color lineColor(255, 255, 255, 64);
+
     // We'll use a vertex array since we have many lines
     sf::VertexArray grid(sf::PrimitiveType::Lines);
 
-    // Draw vertical lines (along x-axis)
-    for (size_t x = 0; x <= tiles.size(); ++x) {
-        sf::Vector2f top = getScreenPos(x, 0, 0);
-        sf::Vector2f bottom = getScreenPos(x, tiles[0].size() - 1, 0);
-
-        grid.append(sf::Vertex(top, sf::Color(255, 255, 255, 64)));
-        grid.append(sf::Vertex(bottom, sf::Color(255, 255, 255, 64)));
+    // Draw lines along the x-axis (one per y edge, inclusive)
+    for (int x = 0; x <= width; ++x) {
+        grid.append(sf::Vertex(getScreenPos(x, 0, 0), lineColor));
+        grid.append(sf::Vertex(getScreenPos(x, height, 0), lineColor));
     }
 
-    // Draw horizontal lines (along y-axis)
-    for (size_t y = 0; y <= tiles[0].size(); ++y) {
-        sf::Vector2f left = getScreenPos(0, y, 0);
-        sf::Vector2f right = getScreenPos(tiles.size() - 1, y, 0);
-
-        grid.append(sf::Vertex(left, sf::Color(255, 255, 255, 64)));
-        grid.append(sf::Vertex(right, sf::Color(255, 255, 255, 64)));
+    // Draw lines along the y-axis (one per x edge, inclusive)
+    for (int y = 0; y <= height; ++y) {
+        grid.append(sf::Vertex(getScreenPos(0, y, 0), lineColor));
+        grid.append(sf::Vertex(getScreenPos(width, y, 0), lineColor));
     }
 
     window.draw(grid);

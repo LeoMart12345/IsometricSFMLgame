@@ -1,4 +1,4 @@
-#include "Input_Handler.hpp"
+#include "input_handler.hpp"
 
 InputHandler::InputHandler(sf::RenderWindow& window)
     : window(window),
@@ -10,7 +10,18 @@ void InputHandler::update() {
     // Update mouse button states (SFML 3 enum style)
     for (size_t i = 0; i < sf::Mouse::ButtonCount; ++i) {
         auto button = static_cast<sf::Mouse::Button>(i);
-        prevMouseStates[i] = sf::Mouse::isButtonPressed(button);
+        const bool pressed = sf::Mouse::isButtonPressed(button);
+
+        // Record drag start on the frame the button goes down
+        if (pressed && !prevMouseStates[i]) {
+            dragStartPositions[button] = getMouseScreenPos();
+        }
+        // Clear drag start when the button is released
+        if (!pressed) {
+            dragStartPositions.erase(button);
+        }
+
+        prevMouseStates[i] = pressed;
     }
 
     // Update key states (SFML 3 enum style)
@@ -38,7 +49,6 @@ bool InputHandler::isMouseJustPressed(sf::Mouse::Button button) const {
 bool InputHandler::isMouseReleased(sf::Mouse::Button button) const {
     return prevMouseStates[static_cast<size_t>(button)] && !isMousePressed(button);
 }
-//error! maybe!
 bool InputHandler::isMouseDragging(sf::Mouse::Button button, float minDistance) const {
     if (!isMousePressed(button)) return false;
 

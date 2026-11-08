@@ -8,13 +8,16 @@
 
 Game::Game(TextureManager& textureManager)
 	: texmgr(textureManager),
-	background(texmgr.getRef("background")),
 	inputHandler(window)  // Initialize InputHandler with window
 {
 	this->window.create(sf::VideoMode({ 1920, 1080 }), "SFML 3 Platformer with Rectangle Character");
 	this->window.setFramerateLimit(120);
 	this->loadTextures();
 	this->loadTiles();
+
+	// Construct the background sprite *after* textures are loaded so the
+	// sprite holds a valid reference to the texture.
+	this->background = sf::Sprite(texmgr.getRef("background"));
 }
 
 void Game::pushState(GameState* state)
@@ -44,19 +47,28 @@ GameState* Game::peekState()
 void Game::gameLoop()
 {
 	sf::Clock clock;
-	float dt;
 
 	while (this->window.isOpen())
 	{
-		dt = clock.restart().asSeconds();
+		const float dt = clock.restart().asSeconds();
 
 		inputHandler.update();
 
-		if (peekState() == nullptr) continue;
-		peekState()->handleInput();
-		peekState()->update(dt);
+		GameState* state = peekState();
+		if (state == nullptr) {
+			// No state to render; still pump events so the window can close.
+			while (std::optional<sf::Event> event = this->window.pollEvent()) {
+				if (event->is<sf::Event::Closed>()) {
+					this->window.close();
+				}
+			}
+			continue;
+		}
+
+		state->handleInput();
+		state->update(dt);
 		this->window.clear(sf::Color::Black);
-		peekState()->draw(dt);
+		state->draw(dt);
 		this->window.display();
 	}
 }

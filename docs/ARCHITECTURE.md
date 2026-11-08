@@ -80,10 +80,16 @@ classDiagram
 
     class InputHandler {
         +update()
+        +handleEvent(event)
         +isMousePressed(button) bool
         +isMouseJustPressed(button) bool
+        +isMouseReleased(button) bool
+        +isMouseDragging(button, minDistance) bool
         +isKeyPressed(key) bool
+        +isKeyJustPressed(key) bool
+        +isKeyReleased(key) bool
         +getMouseWorldPos(view) Vector2f
+        +getMouseScreenPos() Vector2i
     }
 
     Game "1" o-- "*" GameState : owns stack
@@ -145,7 +151,7 @@ flowchart LR
     G -->|getScreenPos| S
 
     subgraph Inverse["Inverse (screenToGrid)"]
-        I["gridX = sx / tileWidth + sy / tileHeight<br/>gridY = sy / tileHeight - sx / tileWidth<br/>z = currentZ"]
+        I["halfW = tileWidth / 2, halfH = tileHeight / 2<br/>adjY = sy + z * halfH<br/>gridX = (sx / halfW + adjY / halfH) / 2<br/>gridY = (adjY / halfH - sx / halfW) / 2"]
     end
 
     S -->|screenToGrid| I

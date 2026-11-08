@@ -32,8 +32,8 @@ public:
     InputHandler inputHandler;
 
     TextureManager& texmgr;
-    std::map<std::string, std::unique_ptr<Tile>> tileAtlas; 
-    sf::Sprite background; // This will be constructed with a texture from texmgr.
+    std::map<std::string, std::unique_ptr<Tile>> tileAtlas;
+    sf::Sprite background; // Constructed in the ctor after textures are loaded.
 
 private:
 	void loadTextures();

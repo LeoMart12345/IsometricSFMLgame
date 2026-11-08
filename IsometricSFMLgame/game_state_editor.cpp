@@ -3,7 +3,6 @@
 #include "game.hpp"
 #include "map.hpp"
 #include <SFML/Graphics.hpp>
-#include <iostream>
 
 GameStateEditor::GameStateEditor(Game* game) :
     GameState(game),
@@ -47,7 +46,7 @@ void GameStateEditor::draw(const float dt) {
 
     this->game->window.setView(guiView);
 }
-void GameStateEditor::update(const float dt) {
+void GameStateEditor::update(const float /*dt*/) {
     // Update logic can be added here
 }
 
@@ -88,20 +87,11 @@ void GameStateEditor::handleInput() {
             case sf::Keyboard::Scancode::H:
                 if (currentZLevel < MAX_Z_LEVEL) {
                     currentZLevel++;
-                    std::cout << "Z-Level increased to: " << currentZLevel
-                        << " (MAX: " << MAX_Z_LEVEL << ")" << std::endl;
-                }
-                else {
-                    std::cout << "Warning: Already at maximum Z-Level: " << MAX_Z_LEVEL << std::endl;
                 }
                 break;
             case sf::Keyboard::Scancode::G:
                 if (currentZLevel > 0) {
                     currentZLevel--;
-                    std::cout << "Z-Level decreased to: " << currentZLevel << std::endl;
-                }
-                else {
-                    std::cout << "Warning: Already at ground level (Z=0)" << std::endl;
                 }
                 break;
                 // Add hotkeys for tile types

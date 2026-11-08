@@ -22,19 +22,18 @@ Tile::Tile(unsigned int tileSize, unsigned int height, sf::Texture& texture, Til
     sprite(texture),
     tileType(type)
 {
-    // Set texture rectangle to use entire 64x64 area
+    // Use the full texture as the sprite's source rect.
+    const sf::Vector2u texSize = texture.getSize();
     sprite.setTextureRect(sf::IntRect(
-        sf::Vector2i(0, 0),       // Top-left corner
-        sf::Vector2i(64, 64)      // Size (must match texture) it doesnt right now NEED TO FIX!
+        sf::Vector2i(0, 0),
+        sf::Vector2i(static_cast<int>(texSize.x), static_cast<int>(texSize.y))
     ));
 
-    // Verify texture size matches expected dimensions ADD THIS LINE BACK IN WHEN TEXTURE IS ACTUALLY 64 x 64
-    //assert(texture.getSize().x == 64 && texture.getSize().y == 64); 
-
-    // Maintain isometric positioning
-    //sprite.setOrigin({0.f, static_cast<float>(tileSize * (height - 1)) });
-    sprite.setOrigin({32.f, 32.f }); // Half width, full height
-
+    // Origin at the horizontal center and vertical center of the tile.
+    // (height is reserved for future multi-tile sprites.)
+    (void)height;
+    sprite.setOrigin({ static_cast<float>(tileSize) / 2.f,
+                       static_cast<float>(tileSize) / 2.f });
 }
 
 void Tile::draw(sf::RenderWindow& window, float dt)

@@ -1,6 +1,5 @@
 #include <SFML/Graphics.hpp>
 #include "button.hpp"
-#include <iostream>
 
 void Button::draw(sf::RenderWindow& window, sf::Texture& texture,
     sf::IntRect intRect, sf::Vector2f pos) {
@@ -13,31 +12,19 @@ void Button::draw(sf::RenderWindow& window, sf::Texture& texture,
     const auto [spriteX, spriteY] = buttonSprite.getGlobalBounds().position;
     const auto [spriteWidth, spriteHeight] = buttonSprite.getGlobalBounds().size;
 
-    bool inArea = isInArea(window, spriteX, spriteY, spriteWidth, spriteHeight);
+    const bool inArea = isInArea(window, spriteX, spriteY, spriteWidth, spriteHeight);
 
-	if (inArea) {
-		std::cout << "Hovering Over button!" << std::endl;
-	}
-
-	else
     if (!inArea) {
-        std::cout << "Not over button!" << std::endl;
         isClicked = false;
     }
 
     if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
         if (inArea) {
             isClicked = true;
-            std::cout << "clicked true" << std::endl;
         }
     }
     else if (isClicked) {
-        onClick();
-        std::cout << "onclick" << std::endl;
-
-        isClicked = false;
-    }
-    else {
+        if (onClick) onClick();
         isClicked = false;
     }
 
@@ -52,10 +39,6 @@ void Button::draw(sf::RenderWindow& window, sf::Texture& texture,
 bool Button::isInArea(sf::RenderWindow& window, int x, int y, int width,
     int height) {
     const auto [mouseX, mouseY] = sf::Mouse::getPosition(window);
-    bool x1 = mouseX > x;
-    bool x2 = mouseX < x + width;
-    bool y1 = mouseY > y;
-    bool y2 = mouseY < y + height;
-
-    return x1 && x2 && y1 && y2;
+    return mouseX > x && mouseX < x + width &&
+           mouseY > y && mouseY < y + height;
 }
