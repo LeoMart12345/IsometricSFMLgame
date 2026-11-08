@@ -7,6 +7,10 @@ enum class TileType { VOID, GRASS, FOREST, WATER, RESIDENTIAL, COMMERCIAL, INDUS
 
 std::string tileTypeToStr(TileType type);
 
+// Returns the lowercase texture-atlas key for a tile type.
+// VOID maps to "empty" (there is no "void" texture).
+std::string tileTypeToTextureName(TileType type);
+
 class Tile
 {
 public:

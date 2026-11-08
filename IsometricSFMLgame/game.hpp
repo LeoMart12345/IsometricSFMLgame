@@ -17,8 +17,8 @@ public:
     Game(TextureManager& textureManager);
     ~Game();
 
-    const static int tileSize = 64; 
-    const static int height = 32;
+    static constexpr int tileSize = 64;
+    static constexpr int height = 32;
 
     void pushState(GameState* state);
     void popState();

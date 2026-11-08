@@ -1,17 +1,18 @@
 #include "map.hpp"
 #include <SFML/Graphics.hpp>
 #include "texture_manager.hpp"
-#include "tile.hpp" 
-#include "game.hpp"
-#include "game_state.hpp"
-#include <iostream>
+#include "tile.hpp"
+#include <cmath>
 
 Map::Map(int width, int height, int layers, TextureManager& textureManager) :
     tileWidth(64.f), tileHeight(32.f), texmgr(textureManager)
 {
-    hoverTile = std::make_shared<Tile>(8, 1, texmgr.getRef("empty"), TileType::EMPTY);
+    // Use the same tile size as Game so hover and placed tiles line up.
+    constexpr unsigned int kTileSize = 64;
 
-    // Clear and properly resize
+    hoverTile = std::make_shared<Tile>(
+        kTileSize, 1, texmgr.getRef("empty"), TileType::EMPTY);
+
     tiles.clear();
     tiles.resize(width);
 
@@ -20,23 +21,23 @@ Map::Map(int width, int height, int layers, TextureManager& textureManager) :
         for (auto& layer : col) {
             layer.resize(layers);
 
-            // Initialize each tile
             for (auto& tile : layer) {
                 tile = std::make_shared<Tile>(
-                    8, 1, texmgr.getRef("empty"), TileType::EMPTY
-                );
+                    kTileSize, 1, texmgr.getRef("empty"), TileType::EMPTY);
             }
         }
     }
-
 }
 
 void Map::draw(sf::RenderWindow& window) {
     if (tiles.empty() || tiles[0].empty() || tiles[0][0].empty()) return;
 
-    for (size_t z = 0; z < tiles[0][0].size(); ++z) {
+    // Isometric painter's order: draw back-to-front.
+    // For a 2:1 iso projection, tiles with larger (x + y) are closer to the
+    // viewer, and within the same (x + y) diagonal, larger z is on top.
+    for (size_t x = 0; x < tiles.size(); ++x) {
         for (size_t y = 0; y < tiles[0].size(); ++y) {
-            for (size_t x = 0; x < tiles.size(); ++x) {
+            for (size_t z = 0; z < tiles[0][0].size(); ++z) {
                 if (tiles[x][y][z]->tileType != TileType::EMPTY) {
                     tiles[x][y][z]->sprite.setPosition(getScreenPos(x, y, z));
                     window.draw(tiles[x][y][z]->sprite);
@@ -89,10 +90,11 @@ void Map::placeTile(int x, int y, int z, TileType type) {
         return;
     }
 
-    std::string texName = tileTypeToStr(type);
-    std::transform(texName.begin(), texName.end(), texName.begin(), ::tolower);
+    // VOID clears the tile back to the empty sprite.
+    const TileType storedType = (type == TileType::VOID) ? TileType::EMPTY : type;
+    const std::string texName = tileTypeToTextureName(storedType);
 
-    tiles[x][y][z]->tileType = type;
+    tiles[x][y][z]->tileType = storedType;
     tiles[x][y][z]->sprite.setTexture(texmgr.getRef(texName));
 }
 
@@ -138,22 +140,19 @@ void Map::clearHover() {
 }
 
 void Map::updateHover(const sf::Vector3i& position, TileType type) {
-    if (isInBounds(position.x, position.y, position.z) &&
-        isEmpty(position.x, position.y, position.z)) {
-        hoverPos = position;
-        hoverActive = true;
-
-        std::string texName = tileTypeToStr(type);
-        std::transform(texName.begin(), texName.end(), texName.begin(), ::tolower);
-
-        hoverTile = std::make_shared<Tile>(
-            8, 1, texmgr.getRef(texName), type
-        );
-
-        hoverTile->sprite.setColor(sf::Color(255, 255, 255, 128)); // 50% opacity
-        hoverTile->sprite.setPosition(getScreenPos(position.x, position.y, position.z));
-    }
-    else {
+    if (!isInBounds(position.x, position.y, position.z) ||
+        !isEmpty(position.x, position.y, position.z)) {
         hoverActive = false;
+        return;
     }
+
+    hoverPos = position;
+    hoverActive = true;
+
+    // Reuse the existing hover tile instead of allocating a new one each frame.
+    const std::string texName = tileTypeToTextureName(type);
+    hoverTile->tileType = type;
+    hoverTile->sprite.setTexture(texmgr.getRef(texName));
+    hoverTile->sprite.setColor(sf::Color(255, 255, 255, 128)); // 50% opacity
+    hoverTile->sprite.setPosition(getScreenPos(position.x, position.y, position.z));
 }

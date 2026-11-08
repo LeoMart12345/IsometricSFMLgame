@@ -139,19 +139,21 @@ void Game::loadTiles()
 }
 void Game::loadTextures()
 {
-	texmgr.loadTexture("grass", "C:/Users/leoma/Downloads/pxArt.png");
-	texmgr.loadTexture("forest", "C:/Users/leoma/Downloads/pxArt (1).png");
-	texmgr.loadTexture("water", "C:/Users/leoma/Downloads/Block.png");
-	texmgr.loadTexture("residential", "C:/Users/leoma/Downloads/Block.png");
-	texmgr.loadTexture("commercial", "C:/Users/leoma/Downloads/Block.png");
-	texmgr.loadTexture("industrial", "C:/Users/leoma/Downloads/Block.png");
-	texmgr.loadTexture("road", "C:/Users/leoma/Downloads/Block.png");
-	texmgr.loadTexture("empty", "C:/Users/leoma/Downloads/Empty.png");
+	// Paths are relative to the working directory (the project root when
+	// launched from Visual Studio). Copy the assets into ./assets/.
+	texmgr.loadTexture("grass",       "assets/pxArt.png");
+	texmgr.loadTexture("forest",      "assets/pxArt (1).png");
+	texmgr.loadTexture("water",       "assets/Block.png");
+	texmgr.loadTexture("residential", "assets/Block.png");
+	texmgr.loadTexture("commercial",  "assets/Block.png");
+	texmgr.loadTexture("industrial",  "assets/Block.png");
+	texmgr.loadTexture("road",        "assets/Block.png");
+	texmgr.loadTexture("empty",       "assets/Empty.png");
 
-	texmgr.loadTexture("background", "C:/Users/leoma/Desktop/background.jpeg");
+	texmgr.loadTexture("background",  "assets/background.jpeg");
 
-	//UI Textures
-	texmgr.loadTexture("blue", "C:/Users/leoma/Downloads/BlueBackground.png");
+	// UI textures
+	texmgr.loadTexture("blue",        "assets/BlueBackground.png");
 }
 
 Game::~Game()

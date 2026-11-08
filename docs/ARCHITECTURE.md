@@ -179,7 +179,14 @@ sequenceDiagram
 
     User->>Editor: Right click
     Editor->>Map: placeTile(x, y, z, VOID)
+    Map->>Tile: reset to EMPTY sprite
 ```
+
+## Draw order
+
+Tiles are drawn back-to-front using the isometric painter's algorithm:
+`x` outer, `y` middle, `z` inner. Tiles with larger `(x + y)` are closer to
+the viewer, and within the same diagonal, larger `z` is on top.
 
 ## Controls
 

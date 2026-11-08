@@ -1,4 +1,6 @@
 #include "tile.hpp"
+#include <algorithm>
+#include <cctype>
 #include <stdexcept>
 
 std::string tileTypeToStr(TileType type)
@@ -16,6 +18,17 @@ std::string tileTypeToStr(TileType type)
                                                          
     default: return "Unknown";
     }
+}
+
+std::string tileTypeToTextureName(TileType type)
+{
+    // VOID has no texture of its own; it resets a tile to the empty sprite.
+    if (type == TileType::VOID) return "empty";
+
+    std::string name = tileTypeToStr(type);
+    std::transform(name.begin(), name.end(), name.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return name;
 }
 
 Tile::Tile(unsigned int tileSize, unsigned int height, sf::Texture& texture, TileType type) :
@@ -36,7 +49,7 @@ Tile::Tile(unsigned int tileSize, unsigned int height, sf::Texture& texture, Til
                        static_cast<float>(tileSize) / 2.f });
 }
 
-void Tile::draw(sf::RenderWindow& window, float dt)
+void Tile::draw(sf::RenderWindow& window, float /*dt*/)
 {
     window.draw(sprite);
 }

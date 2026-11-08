@@ -1,6 +1,5 @@
 #include "game_state_start.hpp"
-#include "game_state_editor.hpp" // Add this include to fix the error
-#include <iostream>
+#include "game_state_editor.hpp"
 
 GameStateStart::GameStateStart(Game* game) : GameState(game)
 {
