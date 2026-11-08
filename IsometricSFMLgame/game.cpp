@@ -1,10 +1,9 @@
 // game.cpp
 #include "game.hpp"
-#include "game_state.hpp" 
+#include "game_state.hpp"
 #include "game_state_start.hpp"
 #include "game_state_editor.hpp"
-#include <iostream>
-#include "Tile.hpp"
+#include "tile.hpp"
 
 
 Game::Game(TextureManager& textureManager)

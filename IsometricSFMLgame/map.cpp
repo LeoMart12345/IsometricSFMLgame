@@ -9,8 +9,6 @@
 Map::Map(int width, int height, int layers, TextureManager& textureManager) :
     tileWidth(64.f), tileHeight(32.f), texmgr(textureManager)
 {
-    std::cout << "FORCE-INITIALIZING with " << layers << " layers\n";
-
     hoverTile = std::make_shared<Tile>(8, 1, texmgr.getRef("empty"), TileType::EMPTY);
 
     // Clear and properly resize
@@ -31,11 +29,6 @@ Map::Map(int width, int height, int layers, TextureManager& textureManager) :
         }
     }
 
-    // Verification
-    std::cout << "CONFIRMED dimensions: "
-        << tiles.size() << "x"
-        << tiles[0].size() << "x"
-        << tiles[0][0].size() << "\n";
 }
 
 void Map::draw(sf::RenderWindow& window) {
@@ -77,46 +70,15 @@ sf::Vector3i Map::screenToGrid(float screenX, float screenY, int currentZ) {
 
 
 void Map::placeTile(int x, int y, int z, TileType type) {
-    // Debug: Print attempt information
-    std::cout << "\nAttempting to place tile at (" << x << "," << y << "," << z << "):\n";
-    std::cout << "Map bounds - X:" << tiles.size() - 1
-        << " Y:" << tiles[0].size() - 1
-        << " Z:" << tiles[0][0].size() - 1 << "\n";
-
-    if (isInBounds(x, y, z))
-    {
-        std::string texName = tileTypeToStr(type);
-        std::transform(texName.begin(), texName.end(), texName.begin(), ::tolower);
-
-        // Debug: Texture verification
-        std::cout << "Texture name: " << texName << "\n";
-        if (!texmgr.getRef(texName).getNativeHandle()) {
-            std::cerr << "ERROR: Texture not loaded for '" << texName << "'\n";
-            return;
-        }
-
-        tiles[x][y][z]->tileType = type;
-        tiles[x][y][z]->sprite.setTexture(texmgr.getRef(texName));
-
-        // Debug: Position verification
-        sf::Vector2f screenPos = getScreenPos(x, y, z);
-        std::cout << "Successfully placed at screen position ("
-            << screenPos.x << "," << screenPos.y << ")\n";
-        std::cout << "Texture size: "
-            << texmgr.getRef(texName).getSize().x << "x"
-            << texmgr.getRef(texName).getSize().y << "\n";
+    if (!isInBounds(x, y, z)) {
+        return;
     }
-    else {
-        // error reporting
-        std::cerr << "FAILED: Out of bounds - ";
-        if (x < 0 || x >= static_cast<int>(tiles.size()))
-            std::cerr << "X=" << x << " invalid (0-" << tiles.size() - 1 << ") ";
-        if (y < 0 || y >= static_cast<int>(tiles[0].size()))
-            std::cerr << "Y=" << y << " invalid (0-" << tiles[0].size() - 1 << ") ";
-        if (z < 0 || z >= static_cast<int>(tiles[0][0].size()))
-            std::cerr << "Z=" << z << " invalid (0-" << tiles[0][0].size() - 1 << ") ";
-        std::cerr << "\n";
-    }
+
+    std::string texName = tileTypeToStr(type);
+    std::transform(texName.begin(), texName.end(), texName.begin(), ::tolower);
+
+    tiles[x][y][z]->tileType = type;
+    tiles[x][y][z]->sprite.setTexture(texmgr.getRef(texName));
 }
 
 void Map::drawOutline(sf::RenderWindow& window) {
@@ -167,8 +129,10 @@ void Map::updateHover(const sf::Vector3i& position, TileType type) {
         hoverActive = true;
 
         std::string texName = tileTypeToStr(type);
+        std::transform(texName.begin(), texName.end(), texName.begin(), ::tolower);
+
         hoverTile = std::make_shared<Tile>(
-            8, 1, texmgr.getRef("grass"), TileType::GRASS  // Force grass texture
+            8, 1, texmgr.getRef(texName), type
         );
 
         hoverTile->sprite.setColor(sf::Color(255, 255, 255, 128)); // 50% opacity

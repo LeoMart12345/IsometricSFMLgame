@@ -10,9 +10,9 @@ private:
     
     Map map;                                    // Map instance
     sf::View gameView, guiView;
-    TileType currentTileType = TileType::GRASS; // Default brushmap 
+    TileType currentTileType = TileType::GRASS; // Default brush
     int currentZLevel = 0;                      // Track current Z-level
-	const int MAX_Z_LEVEL = 2;				  // Maximum Z-level
+    static constexpr int MAX_Z_LEVEL = 2;       // Maximum Z-level
 
 public:
     // Constructor declaration

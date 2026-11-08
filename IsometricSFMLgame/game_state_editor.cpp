@@ -1,9 +1,9 @@
 // game_state_editor.cpp
 #include "game_state_editor.hpp"
 #include "game.hpp"
-#include <iostream>
-#include <SFML/Graphics.hpp>
 #include "map.hpp"
+#include <SFML/Graphics.hpp>
+#include <iostream>
 
 GameStateEditor::GameStateEditor(Game* game) :
     GameState(game),
@@ -21,15 +21,14 @@ GameStateEditor::GameStateEditor(Game* game) :
     // 3. Modified game view setup:
     this->gameView.setSize(pos);
 
-    // Calculate center position for a 10x10 isometric map
-    // For 64x32 tiles:
-    float mapCenterX = (10 - 10) * 64 / 2;  // = 0 (from getScreenPos math)
-    float mapCenterY = (10 + 10) * 32 / 4;  // = 160 (center of diamond shape)
+    // Center the view on the middle of the 10x10 isometric map.
+    // getScreenPos(x, y, 0) = ((x - y) * 32, (x + y) * 16)
+    // For a 10x10 map, the visual center is at grid (4.5, 4.5):
+    //   x = (4.5 - 4.5) * 32 = 0
+    //   y = (4.5 + 4.5) * 16 = 144
+    gameView.setCenter({ 0.f, 144.f });
 
-    // Center view on map's natural center point
-    gameView.setCenter({mapCenterX, mapCenterY });
-
-    // Optional: Zoom out a bit to see more of the map
+    // Zoom out a bit to see more of the map
     gameView.zoom(0.8f);
 }
 
@@ -38,12 +37,6 @@ void GameStateEditor::draw(const float dt) {
 
     this->game->window.clear(sf::Color::Black);
     this->game->window.setView(gameView);
-    //dont want a background for now
-    //this->game->window.draw(this->game->background);
-
-    // TEST: Stack tiles at the SAME X,Y coordinates
-    const int testX = 30;
-    const int testY = 10;
 
     // Draw all tiles
     map.draw(this->game->window);
@@ -69,7 +62,6 @@ void GameStateEditor::handleInput() {
     sf::Vector3i gridPos = map.screenToGrid(mousePos.x, mousePos.y, currentZLevel);
     map.updateHover(gridPos, currentTileType);
 
-
     while (std::optional<sf::Event> event = this->game->window.pollEvent()) {
         if (!event) continue;
 
@@ -82,28 +74,13 @@ void GameStateEditor::handleInput() {
                 gameView
             );
 
-            sf::Vector3i gridPos = map.screenToGrid(worldPos.x, worldPos.y, currentZLevel);
+            sf::Vector3i clickGridPos = map.screenToGrid(worldPos.x, worldPos.y, currentZLevel);
 
             if (mousePressed->button == sf::Mouse::Button::Left) {
-                // Use tile atlas for tile placement
-                std::string tileName;
-                switch (currentTileType) {
-                case TileType::GRASS: tileName = "grass"; break;
-                case TileType::FOREST: tileName = "forest"; break;
-                case TileType::WATER: tileName = "water"; break;
-                case TileType::RESIDENTIAL: tileName = "residential"; break;
-                case TileType::COMMERCIAL: tileName = "commercial"; break;
-                case TileType::INDUSTRIAL: tileName = "industrial"; break;
-                case TileType::ROAD: tileName = "road"; break;
-                default: tileName = "grass"; break;
-                }
-
-                if (game->tileAtlas.find(tileName) != game->tileAtlas.end()) {
-                    map.placeTile(gridPos.x, gridPos.y, gridPos.z, currentTileType);
-                }
+                map.placeTile(clickGridPos.x, clickGridPos.y, clickGridPos.z, currentTileType);
             }
             else if (mousePressed->button == sf::Mouse::Button::Right) {
-                map.placeTile(gridPos.x, gridPos.y, gridPos.z, TileType::VOID);
+                map.placeTile(clickGridPos.x, clickGridPos.y, clickGridPos.z, TileType::VOID);
             }
         }
         else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
@@ -134,7 +111,21 @@ void GameStateEditor::handleInput() {
             case sf::Keyboard::Scancode::Num2:
                 currentTileType = TileType::FOREST;
                 break;
-				// Add more hotkeys as for more tile types// Can change this to inventory system when have it
+            case sf::Keyboard::Scancode::Num3:
+                currentTileType = TileType::WATER;
+                break;
+            case sf::Keyboard::Scancode::Num4:
+                currentTileType = TileType::RESIDENTIAL;
+                break;
+            case sf::Keyboard::Scancode::Num5:
+                currentTileType = TileType::COMMERCIAL;
+                break;
+            case sf::Keyboard::Scancode::Num6:
+                currentTileType = TileType::INDUSTRIAL;
+                break;
+            case sf::Keyboard::Scancode::Num7:
+                currentTileType = TileType::ROAD;
+                break;
             }
         }
     }
