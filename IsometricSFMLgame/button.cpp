@@ -36,9 +36,11 @@ void Button::draw(sf::RenderWindow& window, sf::Texture& texture,
     window.draw(buttonSprite);
 }
 
-bool Button::isInArea(sf::RenderWindow& window, int x, int y, int width,
-    int height) {
+bool Button::isInArea(sf::RenderWindow& window, float x, float y, float width,
+    float height) {
     const auto [mouseX, mouseY] = sf::Mouse::getPosition(window);
-    return mouseX > x && mouseX < x + width &&
-           mouseY > y && mouseY < y + height;
+    const float mx = static_cast<float>(mouseX);
+    const float my = static_cast<float>(mouseY);
+    return mx > x && mx < x + width &&
+           my > y && my < y + height;
 }

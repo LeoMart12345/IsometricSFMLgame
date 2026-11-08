@@ -1,4 +1,4 @@
-#include "Tile.hpp"
+#include "tile.hpp"
 #include <stdexcept>
 
 std::string tileTypeToStr(TileType type)

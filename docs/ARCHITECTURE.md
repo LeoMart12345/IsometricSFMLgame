@@ -128,7 +128,7 @@ sequenceDiagram
 ```mermaid
 stateDiagram-v2
     [*] --> Start
-    Start --> Editor : Space pressed
+    Start --> Editor : Space pressed (changeState)
     Start --> [*] : Escape / window closed
     Editor --> [*] : window closed
 ```
@@ -166,7 +166,8 @@ sequenceDiagram
     participant Map
     participant Tile
 
-    User->>Editor: Mouse move
+    User->>Editor: Mouse move / click
+    Editor->>Editor: pollEvent() loop (clicks, keys)
     Editor->>Map: screenToGrid(mouse)
     Editor->>Map: updateHover(gridPos, currentTileType)
     Map->>Tile: create hover sprite (50% alpha)

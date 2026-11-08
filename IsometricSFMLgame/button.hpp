@@ -9,6 +9,6 @@ public:
     std::function<void()> onClick;
 
 private:
-    bool isInArea(sf::RenderWindow& window, int x, int y, int width, int height);
+    bool isInArea(sf::RenderWindow& window, float x, float y, float width, float height);
     bool isClicked = false;
 };

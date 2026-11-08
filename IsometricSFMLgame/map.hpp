@@ -2,7 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <memory> // For smart pointers
-#include "Tile.hpp"
+#include "tile.hpp"
 #include "texture_manager.hpp"
 
 class Map {

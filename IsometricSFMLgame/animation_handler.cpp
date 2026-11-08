@@ -3,7 +3,7 @@
 
 #include "animation_handler.hpp"
 
-void AnimationHandler::update(const float dt)
+void AnimationHandler::update(const float /*dt*/)
 {
     //if (currentAnim >= this->animations.size() || currentAnim < 0) return;
 
@@ -44,7 +44,7 @@ void AnimationHandler::addAnim(Animation& anim)
     return;
 }
 
-void AnimationHandler::changeAnim(unsigned int animID)
+void AnimationHandler::changeAnim(unsigned int /*animID*/)
 {
     ///* Do not change the animation if the animation is currently active or
     // * the new animation does not exist */

@@ -39,10 +39,10 @@ void GameStateEditor::draw(const float dt) {
 
     // Draw all tiles
     map.draw(this->game->window);
-    //draw the hovering tile
-    map.drawHover(this->game->window); // Add this after regular draw
-    //draw the outline of the buildable area
+    // Draw the outline of the buildable area (under the hover tile)
     map.drawOutline(this->game->window);
+    // Draw the hovering tile on top
+    map.drawHover(this->game->window);
 
     this->game->window.setView(guiView);
 }
@@ -52,14 +52,6 @@ void GameStateEditor::update(const float /*dt*/) {
 
 void GameStateEditor::handleInput() {
     if (!this->game) return;
-
-
-    sf::Vector2f mousePos = this->game->window.mapPixelToCoords(
-        sf::Mouse::getPosition(this->game->window),
-        gameView );
-
-    sf::Vector3i gridPos = map.screenToGrid(mousePos.x, mousePos.y, currentZLevel);
-    map.updateHover(gridPos, currentTileType);
 
     while (std::optional<sf::Event> event = this->game->window.pollEvent()) {
         if (!event) continue;
@@ -119,4 +111,13 @@ void GameStateEditor::handleInput() {
             }
         }
     }
+
+    // Update hover *after* processing events so it reflects the current
+    // mouse position and the current brush.
+    const sf::Vector2f mousePos = this->game->window.mapPixelToCoords(
+        sf::Mouse::getPosition(this->game->window),
+        gameView);
+
+    const sf::Vector3i gridPos = map.screenToGrid(mousePos.x, mousePos.y, currentZLevel);
+    map.updateHover(gridPos, currentTileType);
 }

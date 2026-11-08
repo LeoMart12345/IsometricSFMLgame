@@ -1,4 +1,7 @@
+#pragma once
+
 #include <SFML/Graphics.hpp>
+#include <string>
 
 enum class TileType { VOID, GRASS, FOREST, WATER, RESIDENTIAL, COMMERCIAL, INDUSTRIAL, ROAD, EMPTY};
 

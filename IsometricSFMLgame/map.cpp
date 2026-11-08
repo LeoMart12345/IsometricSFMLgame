@@ -1,4 +1,4 @@
-#include "Map.hpp"
+#include "map.hpp"
 #include <SFML/Graphics.hpp>
 #include "texture_manager.hpp"
 #include "tile.hpp" 

@@ -10,7 +10,7 @@ GameStateStart::GameStateStart(Game* game) : GameState(game)
     this->view.setCenter(size * 0.5f);
 }
 
-void GameStateStart::draw(const float dt)
+void GameStateStart::draw(const float /*dt*/)
 {
     if (this->game)
     {
@@ -21,7 +21,7 @@ void GameStateStart::draw(const float dt)
     }
 }
 
-void GameStateStart::update(const float dt)
+void GameStateStart::update(const float /*dt*/)
 {
     // Update logic for the start state
 }
@@ -30,7 +30,9 @@ void GameStateStart::loadgame()
 {
     if (this->game)
     {
-        this->game->pushState(new GameStateEditor(this->game));
+        // Replace the start state with the editor so the stack doesn't grow
+        // every time Space is pressed.
+        this->game->changeState(new GameStateEditor(this->game));
     }
 } 
 
