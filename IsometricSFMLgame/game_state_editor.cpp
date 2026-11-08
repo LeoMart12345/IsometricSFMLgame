@@ -3,6 +3,7 @@
 #include "game.hpp"
 #include "map.hpp"
 #include <SFML/Graphics.hpp>
+#include <optional>
 
 GameStateEditor::GameStateEditor(Game* game) :
     GameState(game),
@@ -58,6 +59,7 @@ void GameStateEditor::handleInput() {
 
         if (event->is<sf::Event::Closed>()) {
             this->game->window.close();
+            return;
         }
         else if (const auto* mousePressed = event->getIf<sf::Event::MouseButtonPressed>()) {
             sf::Vector2f worldPos = this->game->window.mapPixelToCoords(

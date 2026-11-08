@@ -4,6 +4,7 @@
 #include "game_state_start.hpp"
 #include "game_state_editor.hpp"
 #include "tile.hpp"
+#include <optional>
 
 
 Game::Game(TextureManager& textureManager)
@@ -27,6 +28,7 @@ void Game::pushState(GameState* state)
 
 void Game::popState()
 {
+	if (this->states.empty()) return;
 	delete this->states.top();
 	this->states.pop();
 }

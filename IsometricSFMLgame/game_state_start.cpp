@@ -1,5 +1,6 @@
 #include "game_state_start.hpp"
 #include "game_state_editor.hpp"
+#include <optional>
 
 GameStateStart::GameStateStart(Game* game) : GameState(game)
 {
@@ -37,28 +38,36 @@ void GameStateStart::loadgame()
 
 void GameStateStart::handleInput()
 {
-    if (this->game)
+    if (!this->game) return;
+
+    // Defer the state change until after the event loop finishes.
+    // Calling changeState() inside the loop deletes `this`, which would
+    // leave us with a dangling pointer for the rest of the loop.
+    bool shouldStartGame = false;
+
+    while (std::optional<sf::Event> event = this->game->window.pollEvent())
     {
-        while (std::optional<sf::Event> event = this->game->window.pollEvent())
+        if (!event) continue;
+
+        if (event->is<sf::Event::Closed>())
         {
-            if (event)
+            this->game->window.close();
+        }
+        else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
+        {
+            if (keyPressed->scancode == sf::Keyboard::Scancode::Escape)
             {
-                if (event->is<sf::Event::Closed>())
-                {
-                    this->game->window.close();
-                }
-                else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
-                {
-                    if (keyPressed->scancode == sf::Keyboard::Scancode::Escape)
-                    {
-                        this->game->window.close();
-                    }
-                    else if (keyPressed->scancode == sf::Keyboard::Scancode::Space)
-                    {
-                        this->loadgame(); // Transition to the editor state
-                    }
-                }
+                this->game->window.close();
+            }
+            else if (keyPressed->scancode == sf::Keyboard::Scancode::Space)
+            {
+                shouldStartGame = true;
             }
         }
+    }
+
+    if (shouldStartGame)
+    {
+        this->loadgame();
     }
 }
