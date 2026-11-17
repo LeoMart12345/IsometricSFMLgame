@@ -6,7 +6,6 @@
 #include <memory>
 #include <vector>
 
-#include "core/input_handler.hpp"
 #include "core/texture_manager.hpp"
 #include "map/tile_atlas.hpp"
 
@@ -41,7 +40,6 @@ public:
     void gameLoop();
 
     [[nodiscard]] sf::RenderWindow& window();
-    [[nodiscard]] InputHandler& input();
     [[nodiscard]] TextureManager& textures();
     [[nodiscard]] const TileAtlas& tileAtlas() const;
 
@@ -52,7 +50,6 @@ private:
     void applyPendingTransition();
 
     sf::RenderWindow window_;
-    InputHandler input_;
     TextureManager& textures_;
     TileAtlas tileAtlas_;
 
@@ -60,3 +57,4 @@ private:
     std::unique_ptr<GameState> pendingState_;
     bool pendingPop_ = false;
 };
+

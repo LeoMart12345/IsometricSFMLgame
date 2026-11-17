@@ -4,9 +4,6 @@
     <Filter Include="src">
       <UniqueIdentifier>{4a30f8de-0d6c-4c1d-9c58-1f7c6a1d0000}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\animation">
-      <UniqueIdentifier>{4a30f8de-0d6c-4c1d-9c58-1f7c6a1d0001}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\core">
       <UniqueIdentifier>{4a30f8de-0d6c-4c1d-9c58-1f7c6a1d0002}</UniqueIdentifier>
     </Filter>
@@ -15,9 +12,6 @@
     </Filter>
     <Filter Include="src\states">
       <UniqueIdentifier>{4a30f8de-0d6c-4c1d-9c58-1f7c6a1d0004}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\ui">
-      <UniqueIdentifier>{4a30f8de-0d6c-4c1d-9c58-1f7c6a1d0005}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\game">
       <UniqueIdentifier>{4a30f8de-0d6c-4c1d-9c58-1f7c6a1d0008}</UniqueIdentifier>
@@ -33,34 +27,16 @@
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\animation\animation_handler.cpp">
-      <Filter>src\animation</Filter>
-    </ClCompile>
     <ClCompile Include="src\core\asset_path.cpp">
       <Filter>src\core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\game.cpp">
       <Filter>src\core</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\input_handler.cpp">
-      <Filter>src\core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\rng.cpp">
-      <Filter>src\core</Filter>
-    </ClCompile>
     <ClCompile Include="src\core\texture_manager.cpp">
       <Filter>src\core</Filter>
     </ClCompile>
-    <ClCompile Include="src\game\actor.cpp">
-      <Filter>src\game</Filter>
-    </ClCompile>
-    <ClCompile Include="src\game\combat.cpp">
-      <Filter>src\game</Filter>
-    </ClCompile>
-    <ClCompile Include="src\game\pathfinding.cpp">
-      <Filter>src\game</Filter>
-    </ClCompile>
-    <ClCompile Include="src\game\stats.cpp">
+    <ClCompile Include="src\game\player.cpp">
       <Filter>src\game</Filter>
     </ClCompile>
     <ClCompile Include="src\map\map.cpp">
@@ -69,32 +45,14 @@
     <ClCompile Include="src\map\tile.cpp">
       <Filter>src\map</Filter>
     </ClCompile>
-    <ClCompile Include="src\map\tile_grid.cpp">
-      <Filter>src\map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\map\tile_type.cpp">
-      <Filter>src\map</Filter>
-    </ClCompile>
     <ClCompile Include="src\states\game_state_editor.cpp">
       <Filter>src\states</Filter>
     </ClCompile>
     <ClCompile Include="src\states\game_state_start.cpp">
       <Filter>src\states</Filter>
     </ClCompile>
-    <ClCompile Include="src\ui\button.cpp">
-      <Filter>src\ui</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\animation\animation.hpp">
-      <Filter>src\animation</Filter>
-    </ClInclude>
-    <ClInclude Include="src\animation\animation_handler.hpp">
-      <Filter>src\animation</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\assert.hpp">
-      <Filter>src\core</Filter>
-    </ClInclude>
     <ClInclude Include="src\core\asset_path.hpp">
       <Filter>src\core</Filter>
     </ClInclude>
@@ -104,25 +62,10 @@
     <ClInclude Include="src\core\game.hpp">
       <Filter>src\core</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\input_handler.hpp">
-      <Filter>src\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\rng.hpp">
-      <Filter>src\core</Filter>
-    </ClInclude>
     <ClInclude Include="src\core\texture_manager.hpp">
       <Filter>src\core</Filter>
     </ClInclude>
-    <ClInclude Include="src\game\actor.hpp">
-      <Filter>src\game</Filter>
-    </ClInclude>
-    <ClInclude Include="src\game\combat.hpp">
-      <Filter>src\game</Filter>
-    </ClInclude>
-    <ClInclude Include="src\game\pathfinding.hpp">
-      <Filter>src\game</Filter>
-    </ClInclude>
-    <ClInclude Include="src\game\stats.hpp">
+    <ClInclude Include="src\game\player.hpp">
       <Filter>src\game</Filter>
     </ClInclude>
     <ClInclude Include="src\map\grid_geometry.hpp">
@@ -137,12 +80,6 @@
     <ClInclude Include="src\map\tile_atlas.hpp">
       <Filter>src\map</Filter>
     </ClInclude>
-    <ClInclude Include="src\map\tile_grid.hpp">
-      <Filter>src\map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\map\tile_properties.hpp">
-      <Filter>src\map</Filter>
-    </ClInclude>
     <ClInclude Include="src\map\tile_type.hpp">
       <Filter>src\map</Filter>
     </ClInclude>
@@ -155,24 +92,9 @@
     <ClInclude Include="src\states\game_state_start.hpp">
       <Filter>src\states</Filter>
     </ClInclude>
-    <ClInclude Include="src\ui\button.hpp">
-      <Filter>src\ui</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\tests\game_logic_test.cpp">
-      <Filter>tests</Filter>
-    </None>
     <None Include="..\tests\grid_geometry_test.cpp">
-      <Filter>tests</Filter>
-    </None>
-    <None Include="..\tests\pathfinding_test.cpp">
-      <Filter>tests</Filter>
-    </None>
-    <None Include="..\tests\test_framework.hpp">
-      <Filter>tests</Filter>
-    </None>
-    <None Include="..\tests\tile_grid_test.cpp">
       <Filter>tests</Filter>
     </None>
     <None Include="..\CMakeLists.txt" />

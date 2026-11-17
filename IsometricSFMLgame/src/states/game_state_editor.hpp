@@ -3,12 +3,14 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "game/player.hpp"
 #include "map/map.hpp"
 #include "map/tile_type.hpp"
 #include "states/game_state.hpp"
 
 // Map editor: left click places the selected tile, right click clears a cell,
-// G/H move between z levels and 0-7 pick the tile type.
+// G/H move between z levels and 0-7 pick the tile type. The player stands in
+// the middle of the map and plays his idle animation.
 class GameStateEditor : public GameState
 {
 public:
@@ -25,6 +27,7 @@ private:
     void selectTile(TileType type);
 
     Map map_;
+    Player player_;
     sf::View gameView_;
     sf::View guiView_;
     TileType currentTileType_ = TileType::GRASS;

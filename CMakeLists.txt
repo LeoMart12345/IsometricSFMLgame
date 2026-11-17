@@ -40,21 +40,12 @@ if(ISO_BUILD_GAME)
     IsometricSFMLgame/src/main.cpp
     IsometricSFMLgame/src/core/asset_path.cpp
     IsometricSFMLgame/src/core/game.cpp
-    IsometricSFMLgame/src/core/input_handler.cpp
-    IsometricSFMLgame/src/core/rng.cpp
     IsometricSFMLgame/src/core/texture_manager.cpp
-    IsometricSFMLgame/src/game/actor.cpp
-    IsometricSFMLgame/src/game/combat.cpp
-    IsometricSFMLgame/src/game/pathfinding.cpp
-    IsometricSFMLgame/src/game/stats.cpp
+    IsometricSFMLgame/src/game/player.cpp
     IsometricSFMLgame/src/map/map.cpp
     IsometricSFMLgame/src/map/tile.cpp
-    IsometricSFMLgame/src/map/tile_grid.cpp
-    IsometricSFMLgame/src/map/tile_type.cpp
     IsometricSFMLgame/src/states/game_state_editor.cpp
     IsometricSFMLgame/src/states/game_state_start.cpp
-    IsometricSFMLgame/src/ui/button.cpp
-    IsometricSFMLgame/src/animation/animation_handler.cpp
   )
 
   add_executable(IsometricGame ${ISO_SOURCES})
@@ -89,33 +80,16 @@ endif()
 # ---------------------------------------------------------------------------
 enable_testing()
 
-# Every test links the headless simulation sources it needs: no SFML, no window,
-# so `ctest` works on a machine without a display (CI, SSH, containers).
-function(iso_add_test name)
-  add_executable(${name} tests/${name}.cpp ${ARGN})
-  target_include_directories(${name} PRIVATE IsometricSFMLgame/src tests)
+# The projection header has no SFML dependency, so `ctest` works on a machine
+# without a display (CI, SSH, containers).
+add_executable(grid_geometry_test tests/grid_geometry_test.cpp)
+target_include_directories(grid_geometry_test PRIVATE IsometricSFMLgame/src)
 
-  if(MSVC)
-    target_compile_options(${name} PRIVATE /W3 /permissive-)
-  else()
-    target_compile_options(${name} PRIVATE -Wall -Wextra -Wpedantic -Wshadow)
-  endif()
+if(MSVC)
+  target_compile_options(grid_geometry_test PRIVATE /W3 /permissive-)
+else()
+  target_compile_options(grid_geometry_test PRIVATE -Wall -Wextra -Wpedantic -Wshadow)
+endif()
 
-  add_test(NAME ${name} COMMAND ${name})
-endfunction()
-
-set(ISO_SIM_GRID
-  IsometricSFMLgame/src/map/tile_type.cpp
-  IsometricSFMLgame/src/map/tile_grid.cpp
-)
-
-iso_add_test(grid_geometry_test)
-iso_add_test(tile_grid_test ${ISO_SIM_GRID} IsometricSFMLgame/src/core/rng.cpp)
-iso_add_test(pathfinding_test ${ISO_SIM_GRID} IsometricSFMLgame/src/game/pathfinding.cpp
-  IsometricSFMLgame/src/core/rng.cpp)
-iso_add_test(game_logic_test
-  IsometricSFMLgame/src/core/rng.cpp
-  IsometricSFMLgame/src/game/stats.cpp
-  IsometricSFMLgame/src/game/combat.cpp
-  IsometricSFMLgame/src/game/actor.cpp)
+add_test(NAME grid_geometry_test COMMAND grid_geometry_test)
 

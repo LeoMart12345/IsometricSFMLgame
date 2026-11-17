@@ -11,6 +11,8 @@ GameStateEditor::GameStateEditor(Game& game)
     : GameState(game),
       map_(static_cast<int>(config::mapWidth), static_cast<int>(config::mapHeight),
            static_cast<int>(config::mapLayers), game.tileAtlas()),
+      player_(game.textures().getRef("player"),
+              map_.gridToScreen(map_.getWidth() / 2, map_.getHeight() / 2, 0)),
       currentZLevel_(0)
 {
     const sf::Vector2u windowSize = game.window().getSize();
@@ -99,14 +101,16 @@ void GameStateEditor::placeTileAtMouse(const sf::Event::MouseButtonPressed& mous
 
 void GameStateEditor::updateHover()
 {
-    const sf::Vector2f mouseWorld = game_.input().getMouseWorldPos(gameView_);
+    const sf::Vector2i mousePixel = sf::Mouse::getPosition(game_.window());
+    const sf::Vector2f mouseWorld = game_.window().mapPixelToCoords(mousePixel, gameView_);
     const sf::Vector3i gridPos = map_.screenToGrid(mouseWorld, currentZLevel_);
     map_.updateHover(gridPos, currentTileType_);
 }
 
-void GameStateEditor::update(float /*dt*/)
+void GameStateEditor::update(float dt)
 {
     updateHover();
+    player_.update(dt);
 }
 
 void GameStateEditor::draw(float /*dt*/)
@@ -115,10 +119,13 @@ void GameStateEditor::draw(float /*dt*/)
 
     window.setView(gameView_);
     map_.draw(window);
-    // Preview first, grid last: the translucent hover tile must not wash out the
+    // Preview and grid next: the translucent hover tile must not wash out the
     // grid lines that tell the player which cell is selected.
     map_.drawHover(window);
     map_.drawOutline(window, currentZLevel_);
+    // The character is drawn last so the grid lines do not cross his body. He
+    // stands on the topmost layer for now, so no depth sorting is needed yet.
+    player_.draw(window);
 
     // Future HUD elements go here: everything drawn after this point uses the
     // pixel perfect GUI view instead of the zoomed world view.

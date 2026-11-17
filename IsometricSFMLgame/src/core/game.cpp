@@ -8,13 +8,11 @@
 #include <iostream>
 #include <iterator>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <system_error>
 #include <utility>
 #include <vector>
 
-#include "core/assert.hpp"
 #include "core/asset_path.hpp"
 #include "core/constants.hpp"
 #include "states/game_state.hpp"
@@ -45,6 +43,7 @@ constexpr TextureDefinition kTextures[] = {
     {"empty", "assets/Empty.png", sf::Color(0, 0, 0, 0)},
     {"background", "assets/background.jpeg", sf::Color(20, 26, 40, 255)},
     {"blue", "assets/BlueBackground.png", sf::Color(45, 70, 140, 255)},
+    {"player", "assets/player.png", sf::Color(230, 170, 70, 255)},
 };
 
 constexpr TileDefinition kTiles[] = {
@@ -76,7 +75,7 @@ sf::VideoMode fittedVideoMode()
 
 Game::Game(TextureManager& textureManager)
     : window_(fittedVideoMode(), config::windowTitle, sf::Style::Titlebar | sf::Style::Close),
-      input_(window_), textures_(textureManager)
+      textures_(textureManager)
 {
     window_.setFramerateLimit(config::framerateLimit);
 
@@ -105,10 +104,15 @@ void Game::loadTextures()
         if (!fileExists || !textures_.loadTexture(definition.name, path))
         {
             // loadTexture() reports a file that exists but cannot be decoded;
-            // that is a broken asset, whereas a missing file just gets the
-            // generated diamond so the game stays playable.
+            // that is a broken asset, whereas a missing file just gets a
+            // generated stand-in so the game stays playable. The player needs a
+            // frame strip rather than a tile diamond.
             missing.emplace_back(std::string{"'"} + definition.name + "' from '" + definition.file + "'");
-            textures_.createPlaceholder(definition.name, definition.placeholderColor);
+
+            if (std::string{definition.name} == "player")
+                textures_.createPlayerPlaceholder(definition.name, definition.placeholderColor);
+            else
+                textures_.createPlaceholder(definition.name, definition.placeholderColor);
         }
     }
 
@@ -124,32 +128,20 @@ void Game::loadTextures()
 
 void Game::loadTiles()
 {
-    // try_emplace constructs the Tile in place; the atlas is only filled once,
-    // right after the textures exist.
+    // The atlas is filled once, right after the textures exist. try_emplace
+    // constructs the prototype Tile in place.
     for (const TileDefinition& definition : kTiles)
         tileAtlas_.try_emplace(definition.type, textures_.getRef(definition.textureName), definition.type);
-
-    // Every placeable type needs a sprite, otherwise Map would silently keep the
-    // previous tile when one is placed. Fail loudly instead of corrupting the
-    // map: this is a programming/asset wiring error, not user input.
-    for (const TileType type : allTileTypes)
-    {
-        if (isPlaceable(type) && tileAtlas_.find(type) == tileAtlas_.end())
-            throw std::runtime_error("Tile atlas is missing an entry for " + tileTypeToStr(type));
-    }
 }
 
 void Game::pushState(std::unique_ptr<GameState> state)
 {
-    ISO_ASSERT(state != nullptr);
     if (state)
         states_.push_back(std::move(state));
 }
 
 void Game::changeState(std::unique_ptr<GameState> state)
 {
-    ISO_ASSERT(state != nullptr);
-
     // Ignore a null request rather than tearing the state stack down for no
     // reason (see popState() for the intended way to leave a screen).
     if (!state)
@@ -174,12 +166,9 @@ void Game::gameLoop()
         // Clamping keeps the simulation stable when the process is stalled for a
         // while (dragging the window, hitting a breakpoint, alt-tabbing).
         const float dt = std::min(clock.restart().asSeconds(), config::maxFrameTime);
-        input_.update();
 
         while (const std::optional event = window_.pollEvent())
         {
-            input_.handleEvent(*event);
-
             if (event->is<sf::Event::Closed>())
             {
                 window_.close();
@@ -240,11 +229,6 @@ void Game::applyPendingTransition()
 sf::RenderWindow& Game::window()
 {
     return window_;
-}
-
-InputHandler& Game::input()
-{
-    return input_;
 }
 
 TextureManager& Game::textures()

@@ -29,50 +29,20 @@ inline constexpr float editorViewZoom = 0.8f;
 inline constexpr std::uint8_t hoverAlpha = 128;
 
 // A frame that took longer than this (window drag, breakpoint, alt-tab) is
-// treated as this long, so the simulation never teleports actors.
+// treated as this long, so animations never jump forward.
 inline constexpr float maxFrameTime = 0.1f;
 
 // ---------------------------------------------------------------------------
-// Play mode (Diablo-style dungeon crawl)
+// Player
 // ---------------------------------------------------------------------------
-inline constexpr int dungeonWidth = 48;
-inline constexpr int dungeonHeight = 48;
-inline constexpr int dungeonDepth = 4; // number of levels before the run ends
+// Idle sprite sheet (assets/player.png): square frames in one horizontal strip.
+// `playerScreenHeight` is how tall one frame is drawn, and every frame is shown
+// for `playerIdleFrameSeconds`.
+inline constexpr float playerScreenHeight = 64.f;
+inline constexpr float playerIdleFrameSeconds = 0.12f;
 
-inline constexpr float playViewZoom = 0.9f;
-
-// Movement speeds in cells per second (a cell's own move cost also applies).
-inline constexpr float playerCellsPerSecond = 5.f;
-inline constexpr float monsterCellsPerSecond = 2.5f;
-
-// Seconds between two attacks of the same actor.
-inline constexpr float playerAttackDelay = 0.5f;
-inline constexpr float monsterAttackDelay = 0.9f;
-
-// Monsters only start chasing the player from this distance away (cells).
-inline constexpr int monsterAggroRadius = 9;
-
-// Monsters re-run their pathfinding at most this often (seconds).
-inline constexpr float monsterRepathDelay = 0.6f;
-
-// Number of monsters on dungeon level 1, plus this many extra per level.
-inline constexpr int baseMonsterCount = 6;
-inline constexpr int monstersPerLevel = 4;
-
-// Healing potions the player starts with, and how much one restores.
-inline constexpr int startingPotions = 3;
-inline constexpr float potionHealFraction = 0.45f;
-
-// A monster always drops at most this many items.
-inline constexpr int maxDropsPerMonster = 2;
-
-// Player experience per killed monster: base * level of the monster.
-inline constexpr int monsterExperience = 25;
-
-// Inventory limits.
-inline constexpr int inventorySlots = 24;
-inline constexpr float inventoryMaxWeight = 80.f;
-
-// Camera smoothing factor for following the player (1/s).
-inline constexpr float cameraFollowSharpness = 7.f;
+// Generated stand-in sheet (see TextureManager::createPlayerPlaceholder), used
+// when the art file is missing. It is a strip too, so the idle loop still runs.
+inline constexpr unsigned int playerPlaceholderFrames = 4;
+inline constexpr unsigned int playerPlaceholderFrameSize = 48;
 } // namespace config

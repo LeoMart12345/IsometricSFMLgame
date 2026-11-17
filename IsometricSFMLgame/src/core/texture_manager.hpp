@@ -22,6 +22,11 @@ public:
     // that Tile and Map expect from real tile art.
     void createPlaceholder(const std::string& name, sf::Color color);
 
+    // Creates the stand-in idle strip used when assets/player.png is missing:
+    // config::playerPlaceholderFrames square frames of a figure that bobs up
+    // and down, so the animation is visible before any real art is supplied.
+    void createPlayerPlaceholder(const std::string& name, sf::Color color);
+
     [[nodiscard]] bool has(const std::string& name) const;
 
     // Returns the texture stored under `name`.

@@ -64,6 +64,56 @@ void TextureManager::createPlaceholder(const std::string& name, sf::Color color)
     textures_[name] = std::move(texture);
 }
 
+void TextureManager::createPlayerPlaceholder(const std::string& name, sf::Color color)
+{
+    const unsigned int frameCount = config::playerPlaceholderFrames;
+    const unsigned int frameSize = config::playerPlaceholderFrameSize;
+
+    sf::Image image(sf::Vector2u{frameSize * frameCount, frameSize}, sf::Color::Transparent);
+
+    const sf::Vector2u imageSize = image.getSize();
+    const auto paint = [&image, imageSize, color](int x, int y)
+    {
+        if (x < 0 || y < 0)
+            return;
+
+        const auto position = sf::Vector2u{static_cast<unsigned int>(x), static_cast<unsigned int>(y)};
+        if (position.x < imageSize.x && position.y < imageSize.y)
+            image.setPixel(position, color);
+    };
+
+    const int centreX = static_cast<int>(frameSize) / 2;
+    const int feetY = static_cast<int>(frameSize) - 3;
+
+    for (unsigned int frame = 0; frame < frameCount; ++frame)
+    {
+        const int frameX = static_cast<int>(frame * frameSize);
+
+        // Two idle poses, alternating every frame: the figure bobs up 2 px.
+        const int bob = (frame % 2 == 0) ? 0 : 2;
+        const int bodyTop = feetY - 22 - bob;
+        const int headCentreY = bodyTop - 7;
+
+        for (int y = bodyTop; y <= feetY - bob; ++y)
+            for (int x = centreX - 7; x <= centreX + 7; ++x)
+                paint(frameX + x, y);
+
+        // Round head (radius 6) above the body.
+        for (int y = -6; y <= 6; ++y)
+        {
+            const int halfWidth = static_cast<int>(std::sqrt(36 - y * y));
+            for (int x = -halfWidth; x <= halfWidth; ++x)
+                paint(frameX + centreX + x, headCentreY + y);
+        }
+    }
+
+    sf::Texture texture;
+    if (!texture.loadFromImage(image))
+        throw std::runtime_error("Failed to create player placeholder texture: " + name);
+
+    textures_[name] = std::move(texture);
+}
+
 bool TextureManager::has(const std::string& name) const
 {
     return textures_.find(name) != textures_.end();

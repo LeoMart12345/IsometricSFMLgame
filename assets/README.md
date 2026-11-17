@@ -6,48 +6,53 @@ not matter: it searches the current directory and the executable's directory
 plus up to four parents (that covers Visual Studio's `x64/Debug/` and a CMake
 `build/` folder).
 
-**No files here is fine.** Missing art is an expected state, not an error: for
-every missing file the game draws a generated solid-colour diamond placeholder
-and prints one summary block at start-up listing what it could not find. Nothing
-throws, nothing crashes, and any file you add is used the next time you start the
+**No files here is fine.** Missing art is an expected state, not an error: tiles
+get a generated 2:1 diamond in a distinct colour and the player gets a generated
+four-frame idle strip, and one summary block on the console lists what was not
+found. Nothing throws, and any file you add is used the next time you start the
 game.
 
-```
-[assets] 10 of 10 textures have no art file; drawing generated placeholders for them:
-           'grass' from 'assets/pxArt.png'
-           'forest' from 'assets/pxArt (1).png'
-           ...
-[assets] drop those files into assets/ and restart (see assets/README.md)
-```
-
-| File | Used for | Placeholder colour |
+| File | Used for | Placeholder |
 |---|---|---|
-| `pxArt.png` | Grass tile | green |
-| `pxArt (1).png` | Forest tile | dark green |
-| `Block.png` | Water, residential, commercial, industrial and road tiles | blue / sand / purple / grey / slate |
+| `pxArt.png` | Grass tile | green diamond |
+| `pxArt (1).png` | Forest tile | dark green diamond |
+| `Block.png` | Water, residential, commercial, industrial and road tiles | blue / sand / purple / grey / slate diamonds |
 | `Empty.png` | Empty cell sprite (should be fully transparent) | transparent |
 | `background.jpeg` | Title screen background (stretched to the window) | dark blue-grey |
 | `BlueBackground.png` | Loaded as `"blue"`, reserved for HUD panels | steel blue |
+| `player.png` | Player idle animation (see below) | animated four-frame figure |
+
+## Tiles
 
 Tile sprites should be 2:1 isometric diamonds. `Tile` scales the sprite so its
-width equals `config::tileWidth` (64 px), and the sprite origin is the centre of
-the texture, so larger source art works as long as it keeps the 2:1 ratio.
+width equals `config::tileWidth` (64 px) and centres the origin, so larger source
+art works as long as the 2:1 ratio is kept.
 
-### One image, several tile types
+`Block.png` is wired to five tile types, so supplying it makes those five look
+the same. For distinct art, add one file per type and change the matching row of
+`kTextures` in `IsometricSFMLgame/src/core/game.cpp`.
 
-`Block.png` is wired to five tile types, so once you supply it those five all
-look the same. While the art is missing each type keeps its own placeholder
-colour, which is what makes the editor readable. If you want distinct art per
-type, add a file per type and point the matching row of `kTextures` in
-`IsometricSFMLgame/src/core/game.cpp` at it:
+## Player idle sheet
 
-```cpp
-{"water", "assets/Block.png", sf::Color(70, 130, 220, 255)},
-// becomes
-{"water", "assets/water.png", sf::Color(70, 130, 220, 255)},
+`player.png` is a **horizontal strip of square frames**; every frame in the strip
+is one frame of the idle loop. This is how a Diablo II animation conversion is
+normally exported, so cropping one idle direction to a single row gives a file
+the game can use directly:
+
+```
++--------+--------+--------+--------+ ...
+| frame0 | frame1 | frame2 | frame3 |      each frame is, say, 160x160
++--------+--------+--------+--------+ ...
 ```
 
-The third field is only used when the file is missing, so you can leave the
-colour alone.
+* Frame size is taken from the image height; the frame count is
+  `imageWidth / imageHeight`, so the frames must be square.
+* The sprite is anchored at the bottom centre and scaled so one frame is
+  `config::playerScreenHeight` (64 px) tall. If the character looks too small or
+  too large, change that value.
+* Frame duration is `config::playerIdleFrameSeconds` (0.12 s by default). Both
+  constants live in `IsometricSFMLgame/src/core/constants.hpp`.
+* A single-frame image (a plain square) also loads; the animation then simply
+  stays on that frame.
 
 Game assets are not mine.
