@@ -42,7 +42,9 @@ void GameStateEditor::handleKey(sf::Keyboard::Key key)
         game_.changeState(std::make_unique<GameStateStart>(game_));
         return;
     case sf::Keyboard::Key::H:
-        if (currentZLevel_ < config::maxZLevel)
+        // Clamp against the map's real layer count instead of a hardcoded
+        // constant, so changing mapLayers cannot desynchronise the editor.
+        if (currentZLevel_ + 1 < map_.getLayers())
             ++currentZLevel_;
         break;
     case sf::Keyboard::Key::G:
@@ -113,8 +115,10 @@ void GameStateEditor::draw(float /*dt*/)
 
     window.setView(gameView_);
     map_.draw(window);
-    map_.drawOutline(window, currentZLevel_);
+    // Preview first, grid last: the translucent hover tile must not wash out the
+    // grid lines that tell the player which cell is selected.
     map_.drawHover(window);
+    map_.drawOutline(window, currentZLevel_);
 
     // Future HUD elements go here: everything drawn after this point uses the
     // pixel perfect GUI view instead of the zoomed world view.
