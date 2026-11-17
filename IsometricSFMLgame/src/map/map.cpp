@@ -2,6 +2,7 @@
 #include "map/map.hpp"
 
 #include <algorithm>
+#include <numeric>
 #include <stdexcept>
 
 #include "core/constants.hpp"
@@ -27,22 +28,15 @@ Map::Map(int width, int height, int layers, const TileAtlas& tileAtlas)
     if (width_ <= 0 || height_ <= 0 || layers_ <= 0)
         throw std::invalid_argument("Map dimensions must be positive");
 
-    const std::size_t tileCount =
-        static_cast<std::size_t>(width_) * static_cast<std::size_t>(height_) * static_cast<std::size_t>(layers_);
-
-    // Start with every cell empty; placeTile() overwrites the cells the editor
+    // Every cell starts empty; placeTile() overwrites the cells the editor
     // fills in later.
-    tiles_.assign(tileCount, emptyTile(tileAtlas_));
+    tiles_.assign(static_cast<std::size_t>(width_) * height_ * layers_, emptyTile(tileAtlas_));
 
-    // Tiles never move and never change depth, so the painter's order is
-    // computed once here rather than every frame. Sorting by x + y + z draws
-    // cells that are further back first, so nearer cells cover them. A stable
-    // sort keeps equally deep cells in index order, which is all the
-    // tie-breaking this needs.
-    drawOrder_.resize(tileCount);
-    for (std::size_t i = 0; i < tileCount; ++i)
-        drawOrder_[i] = i;
-
+    // Tiles never move and never change depth, so the painter's order (back to
+    // front, by increasing x + y + z) is computed once here. A stable sort
+    // keeps equally deep cells in index order.
+    drawOrder_.resize(tiles_.size());
+    std::iota(drawOrder_.begin(), drawOrder_.end(), std::size_t{0});
     std::stable_sort(drawOrder_.begin(), drawOrder_.end(),
                      [this](std::size_t lhs, std::size_t rhs) { return depthOf(lhs) < depthOf(rhs); });
 
@@ -97,11 +91,9 @@ void Map::draw(sf::RenderTarget& target) const
 {
     for (const std::size_t tileIndex : drawOrder_)
     {
-        const Tile& tile = tiles_[tileIndex];
-
         // Empty cells only hold transparent placeholder art, so skipping them
         // saves a draw call per unfilled cell.
-        if (tile.getType() != TileType::EMPTY)
+        if (const Tile& tile = tiles_[tileIndex]; tile.getType() != TileType::EMPTY)
             tile.draw(target);
     }
 }
@@ -184,22 +176,16 @@ bool Map::isInBounds(int x, int y, int z) const
 
 std::size_t Map::index(int x, int y, int z) const
 {
-    return (static_cast<std::size_t>(z) * static_cast<std::size_t>(height_) + static_cast<std::size_t>(y)) *
-               static_cast<std::size_t>(width_) +
-           static_cast<std::size_t>(x);
+    return (static_cast<std::size_t>(z) * height_ + y) * width_ + x;
 }
 
 int Map::depthOf(std::size_t tileIndex) const
 {
     // Inverse of index(): x varies fastest, z slowest.
-    const std::size_t w = static_cast<std::size_t>(width_);
-    const std::size_t h = static_cast<std::size_t>(height_);
+    const auto w = static_cast<std::size_t>(width_);
+    const auto h = static_cast<std::size_t>(height_);
 
-    const int x = static_cast<int>(tileIndex % w);
-    const int y = static_cast<int>((tileIndex / w) % h);
-    const int z = static_cast<int>(tileIndex / (w * h));
-
-    return x + y + z;
+    return static_cast<int>(tileIndex % w + (tileIndex / w) % h + tileIndex / (w * h));
 }
 
 sf::Vector2f Map::screenPosition(float x, float y, int z) const

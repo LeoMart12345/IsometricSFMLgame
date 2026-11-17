@@ -9,7 +9,7 @@ There is no simulation layer (no combat, pathfinding or tile grid) yet.
 | Path | Responsibility |
 |---|---|
 | `src/main.cpp` | Resolves the asset root, checks for a display server, starts `Game`. |
-| `src/core/game.*` | Owns the window, the textures, the tile atlas and the state stack; runs the frame loop. |
+| `src/core/game.*` | Owns the window, the `TextureManager`, the tile atlas and the state stack; runs the frame loop. |
 | `src/core/texture_manager.*` | Owns every `sf::Texture` and generates stand-ins for missing art. |
 | `src/core/asset_path.*` | Finds `assets/` relative to the working directory or the executable (and up to four parents). |
 | `src/core/constants.hpp` | Window, tile, map, camera and player tunables. |
@@ -44,10 +44,11 @@ the window instead of spinning.
 
 ## Resources
 
-`main()` creates `TextureManager` before `Game`, so textures outlive every sprite
-that references them. `Game` loads the textures, builds the tile atlas once, and
-exposes `window()`, `textures()` and `tileAtlas()`. States are owned by `Game`
-and only borrow those resources.
+`Game` owns the `TextureManager`, the `TileAtlas` and the state stack. Members
+are declared in that order, so destruction runs in reverse: states (with their
+`Map`s and `Player`s) go first, then the atlas, then the textures. Every sprite
+therefore outlives the texture it references, and states only borrow resources
+through `window()`, `textures()` and `tileAtlas()`.
 
 Missing art is a normal state, not an error. `Game::loadTextures()` probes the
 filesystem first (so SFML does not print an error per file), and on failure asks

@@ -10,6 +10,48 @@ map playing his idle animation.
 
 Game assets are not mine.
 
+## How the pieces connect
+
+`Game` owns the window and every resource; states only borrow them. Solid
+arrows mean ownership or a call, dotted arrows mean a borrowed reference.
+
+```mermaid
+flowchart TD
+    main["main.cpp<br/>asset lookup + display check"]
+    game["Game<br/>window · textures · tile atlas · state stack"]
+    tm["TextureManager<br/>owns every sf::Texture"]
+    atlas["TileAtlas<br/>prototype Tile per TileType"]
+    start["GameStateStart<br/>title screen"]
+    editor["GameStateEditor<br/>map editor"]
+    map["Map<br/>layered tiles + draw order"]
+    tile["Tile<br/>sprite + TileType"]
+    geo["grid_geometry<br/>project / unproject (no SFML)"]
+    player["Player<br/>idle animation"]
+    assets["assets/*.png<br/>generated placeholders if missing"]
+
+    main -->|constructs| game
+    main -->|pushes| start
+    game -->|owns| tm
+    game -->|owns| atlas
+    game -->|pushState / changeState| start
+    game -->|pushState / changeState| editor
+    start -.->|borrow window / textures| game
+    editor -.->|borrow window / textures / atlas| game
+    start -->|Enter / Space| editor
+    editor -->|Escape| start
+    editor -->|owns| map
+    editor -->|owns| player
+    map -->|copies prototypes| atlas
+    map -->|uses| geo
+    map -->|stores| tile
+    tile -->|references texture| tm
+    player -->|references texture| tm
+    tm -->|loads| assets
+```
+
+`Game` declares the resources before the state stack, so they are destroyed
+*after* the states: no `Map` or `Player` can outlive the texture it draws.
+
 ## Requirements
 
 | Dependency | Version | Notes |

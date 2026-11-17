@@ -72,18 +72,15 @@ constexpr TileDefinition kTiles[] = {
 // rest of the game adapts without further changes.
 sf::VideoMode fittedVideoMode()
 {
-    const sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
-    if (desktop.size.x == 0 || desktop.size.y == 0) // no display information
+    const sf::Vector2u desktop = sf::VideoMode::getDesktopMode().size;
+    if (desktop.x == 0 || desktop.y == 0) // no display information
         return sf::VideoMode({config::windowWidth, config::windowHeight});
 
-    return sf::VideoMode({std::min(config::windowWidth, desktop.size.x),
-                          std::min(config::windowHeight, desktop.size.y)});
+    return sf::VideoMode({std::min(config::windowWidth, desktop.x), std::min(config::windowHeight, desktop.y)});
 }
 } // namespace
 
-Game::Game(TextureManager& textureManager)
-    : window_(fittedVideoMode(), config::windowTitle, sf::Style::Titlebar | sf::Style::Close),
-      textures_(textureManager)
+Game::Game() : window_(fittedVideoMode(), config::windowTitle, sf::Style::Titlebar | sf::Style::Close)
 {
     window_.setFramerateLimit(config::framerateLimit);
 
@@ -102,25 +99,22 @@ void Game::loadTextures()
     // missing gets a generated placeholder and is reported once, as a group.
     std::vector<std::string> missing;
 
-    for (const TextureDefinition& definition : kTextures)
+    for (const auto& [name, file, color, kind] : kTextures)
     {
-        const std::filesystem::path path = assets::resolve(definition.file);
+        const std::filesystem::path path = assets::resolve(file);
 
         std::error_code error;
-        const bool fileExists = !path.empty() && std::filesystem::is_regular_file(path, error) && !error;
+        if (std::filesystem::is_regular_file(path, error) && textures_.loadTexture(name, path))
+            continue;
 
-        if (!fileExists || !textures_.loadTexture(definition.name, path))
-        {
-            // loadTexture() reports a file that exists but cannot be decoded;
-            // that is a broken asset, whereas a missing file just gets a
-            // generated stand-in so the game stays playable.
-            missing.emplace_back(std::string{"'"} + definition.name + "' from '" + definition.file + "'");
+        // loadTexture() reports a file that exists but cannot be decoded; a
+        // missing file just gets a generated stand-in so the game stays playable.
+        missing.emplace_back(std::string{"'"} + name + "' from '" + file + "'");
 
-            if (definition.placeholder == PlaceholderKind::PlayerStrip)
-                textures_.createPlayerPlaceholder(definition.name, definition.placeholderColor);
-            else
-                textures_.createPlaceholder(definition.name, definition.placeholderColor);
-        }
+        if (kind == PlaceholderKind::PlayerStrip)
+            textures_.createPlayerPlaceholder(name, color);
+        else
+            textures_.createPlaceholder(name, color);
     }
 
     if (missing.empty())
@@ -137,8 +131,8 @@ void Game::loadTiles()
 {
     // The atlas is filled once, right after the textures exist. try_emplace
     // constructs the prototype Tile in place.
-    for (const TileDefinition& definition : kTiles)
-        tileAtlas_.try_emplace(definition.type, textures_.getRef(definition.textureName), definition.type);
+    for (const auto& [textureName, type] : kTiles)
+        tileAtlas_.try_emplace(type, textures_.getRef(textureName), type);
 }
 
 void Game::pushState(std::unique_ptr<GameState> state)
@@ -196,7 +190,7 @@ void Game::gameLoop()
 
         // No state left to draw: end the loop instead of spinning on an empty
         // stack.
-        if (!peekState() && !pendingState_)
+        if (states_.empty() && !pendingState_)
         {
             window_.close();
             break;
@@ -220,19 +214,4 @@ void Game::applyPendingTransition()
         states_.pop_back();
 
     states_.push_back(std::move(pendingState_));
-}
-
-sf::RenderWindow& Game::window()
-{
-    return window_;
-}
-
-TextureManager& Game::textures()
-{
-    return textures_;
-}
-
-const TileAtlas& Game::tileAtlas() const
-{
-    return tileAtlas_;
 }

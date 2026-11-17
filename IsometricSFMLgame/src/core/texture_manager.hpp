@@ -27,12 +27,13 @@ public:
     // and down, so the animation is visible before any real art is supplied.
     void createPlayerPlaceholder(const std::string& name, sf::Color color);
 
-    [[nodiscard]] bool has(const std::string& name) const;
-
     // Returns the texture stored under `name`.
     // Throws std::out_of_range when the name is unknown.
     [[nodiscard]] const sf::Texture& getRef(const std::string& name) const;
 
 private:
+    // Uploads a generated image and stores it under `name`.
+    void store(const std::string& name, const sf::Image& image);
+
     std::map<std::string, sf::Texture> textures_;
 };

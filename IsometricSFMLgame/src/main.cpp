@@ -6,7 +6,6 @@
 
 #include "core/asset_path.hpp"
 #include "core/game.hpp"
-#include "core/texture_manager.hpp"
 #include "states/game_state_start.hpp"
 
 namespace
@@ -21,7 +20,7 @@ bool hasDisplayServer()
     const char* const display = std::getenv("DISPLAY");
     const char* const wayland = std::getenv("WAYLAND_DISPLAY");
 
-    return (display != nullptr && display[0] != '\0') || (wayland != nullptr && wayland[0] != '\0');
+    return (display && *display) || (wayland && *wayland);
 #else
     return true;
 #endif
@@ -42,9 +41,7 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        TextureManager textureManager;
-
-        Game game(textureManager);
+        Game game;
         game.pushState(std::make_unique<GameStateStart>(game));
         game.gameLoop();
     }

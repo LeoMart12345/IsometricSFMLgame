@@ -8,19 +8,15 @@
 
 GameStateStart::GameStateStart(Game& game) : GameState(game), background_(game.textures().getRef("background"))
 {
-    const sf::Vector2u windowSize = game.window().getSize();
-    const sf::Vector2f size{static_cast<float>(windowSize.x), static_cast<float>(windowSize.y)};
-
-    view_.setSize(size);
-    view_.setCenter(size / 2.f);
+    const sf::Vector2f size = static_cast<sf::Vector2f>(game.window().getSize());
+    view_ = sf::View(size / 2.f, size);
 
     // Stretch the background over the whole window. Using the texture size
     // instead of a hardcoded value keeps this correct for any source image.
-    const sf::Vector2u textureSize = background_.getTexture().getSize();
-    if (textureSize.x > 0 && textureSize.y > 0)
+    const auto textureSize = static_cast<sf::Vector2f>(background_.getTexture().getSize());
+    if (textureSize.x > 0.f && textureSize.y > 0.f)
     {
-        background_.setScale(
-            {size.x / static_cast<float>(textureSize.x), size.y / static_cast<float>(textureSize.y)});
+        background_.setScale(size.componentWiseDiv(textureSize));
         background_.setPosition({0.f, 0.f});
     }
 }

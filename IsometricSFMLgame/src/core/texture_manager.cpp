@@ -82,11 +82,7 @@ void TextureManager::createPlaceholder(const std::string& name, sf::Color color)
         }
     }
 
-    sf::Texture texture;
-    if (!texture.loadFromImage(image))
-        throw std::runtime_error("Failed to create placeholder texture: " + name);
-
-    textures_[name] = std::move(texture);
+    store(name, image);
 }
 
 void TextureManager::createPlayerPlaceholder(const std::string& name, sf::Color color)
@@ -121,16 +117,16 @@ void TextureManager::createPlayerPlaceholder(const std::string& name, sf::Color 
         fillCircle(image, frameX + centreX, bodyTop - headRadius - 1, headRadius, color);
     }
 
-    sf::Texture texture;
-    if (!texture.loadFromImage(image))
-        throw std::runtime_error("Failed to create player placeholder texture: " + name);
-
-    textures_[name] = std::move(texture);
+    store(name, image);
 }
 
-bool TextureManager::has(const std::string& name) const
+void TextureManager::store(const std::string& name, const sf::Image& image)
 {
-    return textures_.find(name) != textures_.end();
+    sf::Texture texture;
+    if (!texture.loadFromImage(image))
+        throw std::runtime_error("Failed to create placeholder texture: " + name);
+
+    textures_[name] = std::move(texture);
 }
 
 const sf::Texture& TextureManager::getRef(const std::string& name) const

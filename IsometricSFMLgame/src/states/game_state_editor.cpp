@@ -1,11 +1,29 @@
 // game_state_editor.cpp
 #include "states/game_state_editor.hpp"
 
+#include <algorithm>
+#include <iterator>
 #include <memory>
+#include <utility>
 
 #include "core/constants.hpp"
 #include "core/game.hpp"
 #include "states/game_state_start.hpp"
+
+namespace
+{
+// Number-key palette, in the order shown in the README.
+constexpr std::pair<sf::Keyboard::Key, TileType> kTileKeys[] = {
+    {sf::Keyboard::Key::Num0, TileType::VOID},
+    {sf::Keyboard::Key::Num1, TileType::GRASS},
+    {sf::Keyboard::Key::Num2, TileType::FOREST},
+    {sf::Keyboard::Key::Num3, TileType::WATER},
+    {sf::Keyboard::Key::Num4, TileType::RESIDENTIAL},
+    {sf::Keyboard::Key::Num5, TileType::COMMERCIAL},
+    {sf::Keyboard::Key::Num6, TileType::INDUSTRIAL},
+    {sf::Keyboard::Key::Num7, TileType::ROAD},
+};
+} // namespace
 
 GameStateEditor::GameStateEditor(Game& game)
     : GameState(game),
@@ -14,16 +32,13 @@ GameStateEditor::GameStateEditor(Game& game)
       player_(game.textures().getRef("player"),
               map_.gridToScreen(map_.getWidth() / 2, map_.getHeight() / 2, 0))
 {
-    const sf::Vector2u windowSize = game.window().getSize();
-    const sf::Vector2f size{static_cast<float>(windowSize.x), static_cast<float>(windowSize.y)};
+    const sf::Vector2f size = static_cast<sf::Vector2f>(game.window().getSize());
 
     // GUI view: pixel perfect, used for HUD elements.
-    guiView_.setSize(size);
-    guiView_.setCenter(size / 2.f);
+    guiView_ = sf::View(size / 2.f, size);
 
     // World view: same size, but centred on the map and zoomed out a little.
-    gameView_.setSize(size);
-    gameView_.setCenter(map_.getCenter());
+    gameView_ = sf::View(map_.getCenter(), size);
     gameView_.zoom(config::editorViewZoom);
 }
 
@@ -43,42 +58,19 @@ void GameStateEditor::handleKey(sf::Keyboard::Key key)
         game_.changeState(std::make_unique<GameStateStart>(game_));
         return;
     case sf::Keyboard::Key::H:
-        // Clamp against the map's real layer count instead of a hardcoded
-        // constant, so changing mapLayers cannot desynchronise the editor.
-        if (currentZLevel_ + 1 < map_.getLayers())
-            ++currentZLevel_;
-        break;
+        currentZLevel_ = std::min(currentZLevel_ + 1, map_.getLayers() - 1);
+        return;
     case sf::Keyboard::Key::G:
-        if (currentZLevel_ > 0)
-            --currentZLevel_;
-        break;
-    case sf::Keyboard::Key::Num0:
-        selectTile(TileType::VOID);
-        break;
-    case sf::Keyboard::Key::Num1:
-        selectTile(TileType::GRASS);
-        break;
-    case sf::Keyboard::Key::Num2:
-        selectTile(TileType::FOREST);
-        break;
-    case sf::Keyboard::Key::Num3:
-        selectTile(TileType::WATER);
-        break;
-    case sf::Keyboard::Key::Num4:
-        selectTile(TileType::RESIDENTIAL);
-        break;
-    case sf::Keyboard::Key::Num5:
-        selectTile(TileType::COMMERCIAL);
-        break;
-    case sf::Keyboard::Key::Num6:
-        selectTile(TileType::INDUSTRIAL);
-        break;
-    case sf::Keyboard::Key::Num7:
-        selectTile(TileType::ROAD);
-        break;
+        currentZLevel_ = std::max(currentZLevel_ - 1, 0);
+        return;
     default:
         break;
     }
+
+    // 0 selects the eraser, 1-7 pick a tile through the lookup table above.
+    const auto binding = std::ranges::find_if(kTileKeys, [key](const auto& entry) { return entry.first == key; });
+    if (binding != std::end(kTileKeys))
+        selectTile(binding->second);
 }
 
 void GameStateEditor::placeTileAtMouse(const sf::Event::MouseButtonPressed& mouse)

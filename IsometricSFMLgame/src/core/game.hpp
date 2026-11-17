@@ -19,7 +19,7 @@ class GameState;
 class Game
 {
 public:
-    explicit Game(TextureManager& textureManager);
+    Game();
     ~Game();
 
     Game(const Game&) = delete;
@@ -36,9 +36,10 @@ public:
 
     void gameLoop();
 
-    [[nodiscard]] sf::RenderWindow& window();
-    [[nodiscard]] TextureManager& textures();
-    [[nodiscard]] const TileAtlas& tileAtlas() const;
+    // Resources owned by the game, borrowed by the states.
+    [[nodiscard]] sf::RenderWindow& window() { return window_; }
+    [[nodiscard]] TextureManager& textures() { return textures_; }
+    [[nodiscard]] const TileAtlas& tileAtlas() const { return tileAtlas_; }
 
 private:
     [[nodiscard]] GameState* peekState();
@@ -47,7 +48,7 @@ private:
     void applyPendingTransition();
 
     sf::RenderWindow window_;
-    TextureManager& textures_;
+    TextureManager textures_;
     TileAtlas tileAtlas_;
 
     std::vector<std::unique_ptr<GameState>> states_;
