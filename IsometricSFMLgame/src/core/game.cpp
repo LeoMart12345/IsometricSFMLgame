@@ -3,11 +3,18 @@
 
 #include <SFML/Window/Event.hpp>
 
+#include <algorithm>
 #include <filesystem>
 #include <iostream>
+#include <iterator>
 #include <optional>
+#include <stdexcept>
+#include <string>
+#include <system_error>
 #include <utility>
+#include <vector>
 
+#include "core/assert.hpp"
 #include "core/asset_path.hpp"
 #include "core/constants.hpp"
 #include "states/game_state.hpp"
@@ -50,11 +57,25 @@ constexpr TileDefinition kTiles[] = {
     {"road", TileType::ROAD},
     {"empty", TileType::EMPTY},
 };
+
+// The window is authored at 1920x1080, which does not fit every desktop (a
+// 1366x768 laptop, a scaled HiDPI screen). A window bigger than the screen ends
+// up with its title bar or its edges off screen, so shrink the requested mode to
+// the desktop instead. Views are sized from window.getSize() everywhere, so the
+// rest of the game adapts without further changes.
+sf::VideoMode fittedVideoMode()
+{
+    const sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+    if (desktop.size.x == 0 || desktop.size.y == 0) // no display information
+        return sf::VideoMode({config::windowWidth, config::windowHeight});
+
+    return sf::VideoMode({std::min(config::windowWidth, desktop.size.x),
+                          std::min(config::windowHeight, desktop.size.y)});
+}
 } // namespace
 
 Game::Game(TextureManager& textureManager)
-    : window_(sf::VideoMode({config::windowWidth, config::windowHeight}), config::windowTitle,
-              sf::Style::Titlebar | sf::Style::Close),
+    : window_(fittedVideoMode(), config::windowTitle, sf::Style::Titlebar | sf::Style::Close),
       input_(window_), textures_(textureManager)
 {
     window_.setFramerateLimit(config::framerateLimit);
@@ -67,16 +88,38 @@ Game::~Game() = default;
 
 void Game::loadTextures()
 {
+    // The repository ships without the art files, so a missing texture is an
+    // expected state rather than a failure. Probe the filesystem first: letting
+    // sf::Texture::loadFromFile() fail would print a three line error per file,
+    // which turned a normal start-up into a wall of red text. Everything that is
+    // missing gets a generated placeholder and is reported once, as a group.
+    std::vector<std::string> missing;
+
     for (const TextureDefinition& definition : kTextures)
     {
         const std::filesystem::path path = assets::resolve(definition.file);
-        if (!textures_.loadTexture(definition.name, path))
+
+        std::error_code error;
+        const bool fileExists = !path.empty() && std::filesystem::is_regular_file(path, error) && !error;
+
+        if (!fileExists || !textures_.loadTexture(definition.name, path))
         {
-            std::cerr << "[assets] using a placeholder for '" << definition.name << "' (expected '"
-                      << definition.file << "')\n";
+            // loadTexture() reports a file that exists but cannot be decoded;
+            // that is a broken asset, whereas a missing file just gets the
+            // generated diamond so the game stays playable.
+            missing.emplace_back(std::string{"'"} + definition.name + "' from '" + definition.file + "'");
             textures_.createPlaceholder(definition.name, definition.placeholderColor);
         }
     }
+
+    if (missing.empty())
+        return;
+
+    std::cerr << "[assets] " << missing.size() << " of " << std::size(kTextures)
+              << " textures have no art file; drawing generated placeholders for them:\n";
+    for (const std::string& entry : missing)
+        std::cerr << "           " << entry << '\n';
+    std::cerr << "[assets] drop those files into assets/ and restart (see assets/README.md)\n";
 }
 
 void Game::loadTiles()
@@ -85,16 +128,33 @@ void Game::loadTiles()
     // right after the textures exist.
     for (const TileDefinition& definition : kTiles)
         tileAtlas_.try_emplace(definition.type, textures_.getRef(definition.textureName), definition.type);
+
+    // Every placeable type needs a sprite, otherwise Map would silently keep the
+    // previous tile when one is placed. Fail loudly instead of corrupting the
+    // map: this is a programming/asset wiring error, not user input.
+    for (const TileType type : allTileTypes)
+    {
+        if (isPlaceable(type) && tileAtlas_.find(type) == tileAtlas_.end())
+            throw std::runtime_error("Tile atlas is missing an entry for " + tileTypeToStr(type));
+    }
 }
 
 void Game::pushState(std::unique_ptr<GameState> state)
 {
+    ISO_ASSERT(state != nullptr);
     if (state)
         states_.push_back(std::move(state));
 }
 
 void Game::changeState(std::unique_ptr<GameState> state)
 {
+    ISO_ASSERT(state != nullptr);
+
+    // Ignore a null request rather than tearing the state stack down for no
+    // reason (see popState() for the intended way to leave a screen).
+    if (!state)
+        return;
+
     pendingState_ = std::move(state);
     pendingPop_ = false;
 }
@@ -111,7 +171,9 @@ void Game::gameLoop()
 
     while (window_.isOpen())
     {
-        const float dt = clock.restart().asSeconds();
+        // Clamping keeps the simulation stable when the process is stalled for a
+        // while (dragging the window, hitting a breakpoint, alt-tabbing).
+        const float dt = std::min(clock.restart().asSeconds(), config::maxFrameTime);
         input_.update();
 
         while (const std::optional event = window_.pollEvent())
@@ -142,6 +204,14 @@ void Game::gameLoop()
 
         // Deferred so a state is never destroyed while it is executing.
         applyPendingTransition();
+
+        // Nothing left to draw (the last state popped itself and no replacement
+        // was queued): end the loop instead of spinning on an empty stack.
+        if (!peekState() && !pendingState_)
+        {
+            window_.close();
+            break;
+        }
     }
 }
 

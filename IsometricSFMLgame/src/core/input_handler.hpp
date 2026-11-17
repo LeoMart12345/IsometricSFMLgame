@@ -42,6 +42,9 @@ private:
     [[nodiscard]] static bool isValidMouseButton(sf::Mouse::Button button);
     [[nodiscard]] static bool isValidKey(sf::Keyboard::Key key);
 
+    // Drops every recorded state (used when the window loses focus).
+    void clearAllStates();
+
     sf::RenderWindow& window_;
 
     std::array<bool, sf::Mouse::ButtonCount> mouseStates_{};

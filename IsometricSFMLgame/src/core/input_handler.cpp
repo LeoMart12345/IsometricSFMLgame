@@ -1,6 +1,7 @@
 // input_handler.cpp
 #include "core/input_handler.hpp"
 
+#include <cmath>
 #include <cstdlib>
 
 InputHandler::InputHandler(sf::RenderWindow& window) : window_(window)
@@ -43,6 +44,23 @@ void InputHandler::handleEvent(const sf::Event& event)
     {
         dragStartPositions_.erase(mouseReleased->button);
     }
+    else if (event.is<sf::Event::FocusLost>())
+    {
+        // Once the window loses focus the polling functions stop reporting the
+        // real button state (a key released while another window was focused
+        // never shows up as "released"). Clearing everything avoids keys that
+        // stay stuck down and drags that never end.
+        clearAllStates();
+    }
+}
+
+void InputHandler::clearAllStates()
+{
+    mouseStates_.fill(false);
+    prevMouseStates_.fill(false);
+    keyStates_.fill(false);
+    prevKeyStates_.fill(false);
+    dragStartPositions_.clear();
 }
 
 bool InputHandler::isMousePressed(sf::Mouse::Button button) const
@@ -71,6 +89,11 @@ bool InputHandler::isMouseReleased(sf::Mouse::Button button) const
 bool InputHandler::isMouseDragging(sf::Mouse::Button button, float minDistance) const
 {
     if (!isMousePressed(button))
+        return false;
+
+    // A negative or NaN threshold would make every comparison true and report a
+    // drag while the cursor is still sitting on the press position.
+    if (!(minDistance >= 0.f) || !std::isfinite(minDistance))
         return false;
 
     const auto start = dragStartPositions_.find(button);

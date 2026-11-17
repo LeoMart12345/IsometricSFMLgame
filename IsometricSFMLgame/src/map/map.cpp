@@ -91,7 +91,10 @@ void Map::placeTile(int x, int y, int z, TileType type)
 
 void Map::updateHover(const sf::Vector3i& position, TileType type)
 {
-    if (type == TileType::VOID || !isEmpty(position.x, position.y, position.z))
+    // Bounds first: isEmpty() reports out-of-bounds cells as empty, so without
+    // this check the preview would be drawn floating outside the map.
+    if (!isInBounds(position.x, position.y, position.z) || type == TileType::VOID ||
+        !isEmpty(position.x, position.y, position.z))
     {
         clearHover();
         return;

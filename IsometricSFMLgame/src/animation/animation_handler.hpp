@@ -38,6 +38,10 @@ public:
     [[nodiscard]] int getCurrentAnim() const;
 
 private:
+    // Recomputes bounds_ from frameSize_, currentAnim_ and elapsed_ so every
+    // operation that can move the visible frame stays consistent.
+    void syncBounds();
+
     std::vector<Animation> animations_;
     sf::IntRect bounds_{};    // Visible part of the sheet
     sf::IntRect frameSize_{}; // Pixel size/origin of one frame

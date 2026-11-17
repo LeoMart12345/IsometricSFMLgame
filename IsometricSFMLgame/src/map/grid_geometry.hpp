@@ -1,7 +1,9 @@
 // grid_geometry.hpp
 #pragma once
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
 
 #include "core/constants.hpp"
 
@@ -46,9 +48,23 @@ inline constexpr float halfTileHeight = static_cast<float>(config::tileHeight) /
 }
 
 // The cell whose centre is closest to `grid`.
+[[nodiscard]] inline int snapAxis(float value)
+{
+    // lround() overflowing the representable long range is a domain error, and
+    // the following float -> int conversion would be implementation defined.
+    // Non-finite input has no nearest cell at all, so snap it to the origin;
+    // finite but absurd coordinates saturate to the int range.
+    if (!std::isfinite(value))
+        return 0;
+
+    const double clamped = std::clamp(static_cast<double>(value), static_cast<double>(std::numeric_limits<int>::min()),
+                                      static_cast<double>(std::numeric_limits<int>::max()));
+    return static_cast<int>(std::lround(clamped));
+}
+
 [[nodiscard]] inline GridPoint snap(PointF grid)
 {
     // lround() (not a truncating cast) so clicks left/above the origin work.
-    return {static_cast<int>(std::lround(grid.x)), static_cast<int>(std::lround(grid.y))};
+    return {snapAxis(grid.x), snapAxis(grid.y)};
 }
 } // namespace iso

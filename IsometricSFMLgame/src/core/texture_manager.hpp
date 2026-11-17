@@ -16,8 +16,10 @@ public:
     // invalid; the caller can then call createPlaceholder().
     bool loadTexture(const std::string& name, const std::filesystem::path& filename);
 
-    // Creates an isometric diamond placeholder. This keeps the game playable
-    // when the art files are not present (the repository ships without them).
+    // Creates a 2:1 isometric diamond placeholder (config::tileWidth by
+    // config::tileHeight). This keeps the game playable when the art files are
+    // not present (the repository ships without them) and matches the footprint
+    // that Tile and Map expect from real tile art.
     void createPlaceholder(const std::string& name, sf::Color color);
 
     [[nodiscard]] bool has(const std::string& name) const;
