@@ -1,0 +1,34 @@
+{
+  "version": 4,
+  "configurations": [
+    {
+      "name": "Linux",
+      "compilerPath": "/usr/bin/g++",
+      "cStandard": "c17",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "linux-gcc-x64",
+      "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+      "includePath": [
+        "${workspaceFolder}/IsometricSFMLgame/src",
+        "${workspaceFolder}/tests",
+        "${env:HOME}/.cache/isometric-sfml3/sfml3-3.1.0/include"
+      ]
+    },
+    {
+      "name": "Win32",
+      "cStandard": "c17",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "windows-msvc-x64",
+      "includePath": [
+        "${workspaceFolder}/IsometricSFMLgame/src",
+        "${workspaceFolder}/tests",
+        "C:/ProgrammingProjects/SFML-3.1/SFML-3.1.0/include"
+      ],
+      "defines": [
+        "_DEBUG",
+        "UNICODE",
+        "_UNICODE"
+      ]
+    }
+  ]
+}

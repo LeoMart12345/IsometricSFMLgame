@@ -70,9 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <!-- Root folder of the SFML 3 SDK. Override it on the command line with
-       msbuild /p:SFMLDir=D:\libraries\SFML-3.0.0 or edit the default below. -->
+       msbuild /p:SFMLDir=D:\libraries\SFML-3.1.0 or edit the default below. -->
   <PropertyGroup Label="UserMacros">
-    <SFMLDir Condition="'$(SFMLDir)'==''">C:\ProgrammingProjects\SFML-3.0\SFML-3.0.0</SFMLDir>
+    <SFMLDir Condition="'$(SFMLDir)'==''">C:\ProgrammingProjects\SFML-3.1\SFML-3.1.0</SFMLDir>
   </PropertyGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -152,10 +152,16 @@
     <ClCompile Include="src\core\asset_path.cpp" />
     <ClCompile Include="src\core\game.cpp" />
     <ClCompile Include="src\core\input_handler.cpp" />
+    <ClCompile Include="src\core\rng.cpp" />
     <ClCompile Include="src\core\texture_manager.cpp" />
+    <ClCompile Include="src\game\actor.cpp" />
+    <ClCompile Include="src\game\combat.cpp" />
+    <ClCompile Include="src\game\pathfinding.cpp" />
+    <ClCompile Include="src\game\stats.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\map\map.cpp" />
     <ClCompile Include="src\map\tile.cpp" />
+    <ClCompile Include="src\map\tile_grid.cpp" />
     <ClCompile Include="src\map\tile_type.cpp" />
     <ClCompile Include="src\states\game_state_editor.cpp" />
     <ClCompile Include="src\states\game_state_start.cpp" />
@@ -164,15 +170,23 @@
   <ItemGroup>
     <ClInclude Include="src\animation\animation.hpp" />
     <ClInclude Include="src\animation\animation_handler.hpp" />
+    <ClInclude Include="src\core\assert.hpp" />
     <ClInclude Include="src\core\asset_path.hpp" />
     <ClInclude Include="src\core\constants.hpp" />
     <ClInclude Include="src\core\game.hpp" />
     <ClInclude Include="src\core\input_handler.hpp" />
+    <ClInclude Include="src\core\rng.hpp" />
     <ClInclude Include="src\core\texture_manager.hpp" />
+    <ClInclude Include="src\game\actor.hpp" />
+    <ClInclude Include="src\game\combat.hpp" />
+    <ClInclude Include="src\game\pathfinding.hpp" />
+    <ClInclude Include="src\game\stats.hpp" />
     <ClInclude Include="src\map\grid_geometry.hpp" />
     <ClInclude Include="src\map\map.hpp" />
     <ClInclude Include="src\map\tile.hpp" />
     <ClInclude Include="src\map\tile_atlas.hpp" />
+    <ClInclude Include="src\map\tile_grid.hpp" />
+    <ClInclude Include="src\map\tile_properties.hpp" />
     <ClInclude Include="src\map\tile_type.hpp" />
     <ClInclude Include="src\states\game_state.hpp" />
     <ClInclude Include="src\states\game_state_editor.hpp" />
@@ -180,7 +194,11 @@
     <ClInclude Include="src\ui\button.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\tests\game_logic_test.cpp" />
     <None Include="..\tests\grid_geometry_test.cpp" />
+    <None Include="..\tests\pathfinding_test.cpp" />
+    <None Include="..\tests\test_framework.hpp" />
+    <None Include="..\tests\tile_grid_test.cpp" />
     <None Include="..\CMakeLists.txt" />
     <None Include="..\README.md" />
     <None Include="..\docs\ARCHITECTURE.md" />

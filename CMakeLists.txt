@@ -6,7 +6,8 @@
 #
 # SFML 3 is located with
 # find_package(SFML 3 COMPONENTS Graphics Window System).
-# Point CMake at your SDK with -DCMAKE_PREFIX_PATH=/path/to/SFML-3.0.0.
+# Point CMake at your SDK with -DCMAKE_PREFIX_PATH=/path/to/SFML-3.1.0
+# (any SFML 3.x works; 3.1.0 is the version this project is built against).
 # Set -DISO_BUILD_GAME=OFF to build only the (SFML-free) geometry tests.
 cmake_minimum_required(VERSION 3.20)
 project(IsometricSFMLgame VERSION 1.0.0 LANGUAGES CXX)
@@ -14,6 +15,12 @@ project(IsometricSFMLgame VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Write build/compile_commands.json. Editors (VS Code's C/C++ extension,
+# clangd) use it to see the real include paths, so IntelliSense resolves
+# <SFML/...> against the SFML 3 SDK instead of a system-wide SFML 2 install
+# (SFML 2's sf::Rect has left/top/width/height, SFML 3 has position/size).
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
@@ -34,9 +41,15 @@ if(ISO_BUILD_GAME)
     IsometricSFMLgame/src/core/asset_path.cpp
     IsometricSFMLgame/src/core/game.cpp
     IsometricSFMLgame/src/core/input_handler.cpp
+    IsometricSFMLgame/src/core/rng.cpp
     IsometricSFMLgame/src/core/texture_manager.cpp
+    IsometricSFMLgame/src/game/actor.cpp
+    IsometricSFMLgame/src/game/combat.cpp
+    IsometricSFMLgame/src/game/pathfinding.cpp
+    IsometricSFMLgame/src/game/stats.cpp
     IsometricSFMLgame/src/map/map.cpp
     IsometricSFMLgame/src/map/tile.cpp
+    IsometricSFMLgame/src/map/tile_grid.cpp
     IsometricSFMLgame/src/map/tile_type.cpp
     IsometricSFMLgame/src/states/game_state_editor.cpp
     IsometricSFMLgame/src/states/game_state_start.cpp
@@ -76,11 +89,33 @@ endif()
 # ---------------------------------------------------------------------------
 enable_testing()
 
-add_executable(grid_geometry_test tests/grid_geometry_test.cpp)
-target_include_directories(grid_geometry_test PRIVATE IsometricSFMLgame/src)
-if(MSVC)
-  target_compile_options(grid_geometry_test PRIVATE /W3 /permissive-)
-else()
-  target_compile_options(grid_geometry_test PRIVATE -Wall -Wextra -Wpedantic -Wshadow)
-endif()
-add_test(NAME grid_geometry COMMAND grid_geometry_test)
+# Every test links the headless simulation sources it needs: no SFML, no window,
+# so `ctest` works on a machine without a display (CI, SSH, containers).
+function(iso_add_test name)
+  add_executable(${name} tests/${name}.cpp ${ARGN})
+  target_include_directories(${name} PRIVATE IsometricSFMLgame/src tests)
+
+  if(MSVC)
+    target_compile_options(${name} PRIVATE /W3 /permissive-)
+  else()
+    target_compile_options(${name} PRIVATE -Wall -Wextra -Wpedantic -Wshadow)
+  endif()
+
+  add_test(NAME ${name} COMMAND ${name})
+endfunction()
+
+set(ISO_SIM_GRID
+  IsometricSFMLgame/src/map/tile_type.cpp
+  IsometricSFMLgame/src/map/tile_grid.cpp
+)
+
+iso_add_test(grid_geometry_test)
+iso_add_test(tile_grid_test ${ISO_SIM_GRID} IsometricSFMLgame/src/core/rng.cpp)
+iso_add_test(pathfinding_test ${ISO_SIM_GRID} IsometricSFMLgame/src/game/pathfinding.cpp
+  IsometricSFMLgame/src/core/rng.cpp)
+iso_add_test(game_logic_test
+  IsometricSFMLgame/src/core/rng.cpp
+  IsometricSFMLgame/src/game/stats.cpp
+  IsometricSFMLgame/src/game/combat.cpp
+  IsometricSFMLgame/src/game/actor.cpp)
+
