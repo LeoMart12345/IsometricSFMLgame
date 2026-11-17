@@ -1,60 +1,26 @@
 # Architecture
 
-The project is deliberately small: an SFML 3 window, a state stack with a title
-screen and a map editor, a layered isometric tile map, and one animated player.
-There is no simulation layer (no combat, pathfinding or tile grid) yet.
+The project is deliberately small: an SFML 3 window, a layered isometric
+`Map`, and the pure projection math it uses. There is no simulation, art
+pipeline or state stack — the program opens straight into the tile editor.
 
 ## Directory map
 
 | Path | Responsibility |
 |---|---|
-| `src/main.cpp` | Resolves the asset root, checks for a display server, starts `Game`. |
-| `src/core/game.*` | Owns the window, the `TextureManager`, the tile atlas and the state stack; runs the frame loop. |
-| `src/core/texture_manager.*` | Owns every `sf::Texture` and generates stand-ins for missing art. |
-| `src/core/asset_path.*` | Finds `assets/` relative to the working directory or the executable (and up to four parents). |
-| `src/core/constants.hpp` | Window, tile, map, camera and player tunables. |
+| `src/main.cpp` | Checks for a display server and starts `Game`. |
+| `src/core/game.*` | Owns the window, map and view; handles input and runs the frame loop. |
+| `src/core/constants.hpp` | Window, tile, map, camera and hover tunables. |
+| `src/map/map.*` | Layered tile storage, placement, painter's-order drawing, hover preview and grid outline. |
 | `src/map/grid_geometry.hpp` | Pure isometric projection/unprojection math, no SFML dependency. |
-| `src/map/map.*` | Layered tile storage, painter's-order drawing, hover preview, grid outline. |
-| `src/map/tile.*` | One tile: a sprite plus its `TileType`, scaled to `config::tileWidth`. |
-| `src/map/tile_atlas.hpp` | `std::map<TileType, Tile>` of prototype tiles that `Map` copies from. |
-| `src/map/tile_type.hpp` | The `TileType` enum. |
-| `src/game/player.*` | The player sprite and its idle animation. |
-| `src/states/game_state.hpp` | Abstract state: `handleInput`, `update`, `draw`. |
-| `src/states/game_state_start.*` | Title screen (Enter/Space opens the editor, Escape quits). |
-| `src/states/game_state_editor.*` | Tile placement, layer switching and hover preview. |
-| `tests/grid_geometry_test.cpp` | Headless checks for the projection math. |
+| `src/map/tile_type.hpp` | The tile kinds the editor can place. |
 
-Include paths are rooted at `src/` (`#include "map/map.hpp"`).
+## Ownership
 
-## Frame loop
-
-`Game::gameLoop()` (in `core/game.cpp`):
-
-1. `dt = min(clock.restart(), config::maxFrameTime)` — a stalled frame (window
-   drag, breakpoint, alt-tab) never makes the animation jump.
-2. Poll every event, close the window on `Event::Closed`, and forward the rest to
-   the top state's `handleInput()`.
-3. Call `update(dt)`, clear the window, call `draw(dt)`, `display()`.
-4. Apply a deferred state transition.
-
-State changes are deferred (`pendingState_`) so a state can replace itself from
-inside its own callback without being destroyed while its member function is
-still running. If the stack becomes empty and nothing is pending, the loop closes
-the window instead of spinning.
-
-## Resources
-
-`Game` owns the `TextureManager`, the `TileAtlas` and the state stack. Members
-are declared in that order, so destruction runs in reverse: states (with their
-`Map`s and `Player`s) go first, then the atlas, then the textures. Every sprite
-therefore outlives the texture it references, and states only borrow resources
-through `window()`, `textures()` and `tileAtlas()`.
-
-Missing art is a normal state, not an error. `Game::loadTextures()` probes the
-filesystem first (so SFML does not print an error per file), and on failure asks
-`TextureManager` for a generated stand-in: a 2:1 diamond for tiles, an animated
-four-frame strip for the player. The names of missing files are reported once as
-a group.
+`Game` owns `sf::RenderWindow`, `Map` and `sf::View` by value. `Map` owns a flat
+`std::vector<TileType>` plus a parallel `std::vector<sf::Vector2f>` holding the
+centre of every cell. Nothing is loaded from disk, so construction only fails
+on invalid map dimensions.
 
 ## Coordinates and the map
 
@@ -67,58 +33,57 @@ unproject(screen, z) -> the fractional grid position
 snap(grid)           -> the cell whose centre is closest
 ```
 
-`Map::screenToGrid()` uses the inverse projection and rounds to the nearest cell,
-so a click anywhere inside a diamond selects that cell. The map is
+`Map::screenToGrid()` uses the inverse projection and rounds to the nearest
+cell, so a click anywhere inside a diamond selects that cell. The map is
 `config::mapWidth` x `config::mapHeight` x `config::mapLayers` (10 x 10 x 3) and
-stores tiles in a flat `std::vector`, indexed as `(z * height + y) * width + x`.
+stores cell types in a flat `std::vector`, indexed as
+`(z * height + y) * width + x`.
 
-Drawing order is precomputed once in the constructor: every tile index is sorted
-by `x + y + z`, the standard isometric painter's order. Empty cells are skipped.
-`drawOutline()` draws the grid lines along cell borders (half a cell away from
-the centres) for the active z level, and `drawHover()` draws a translucent
-prototype only over empty, in-bounds cells.
+Drawing order is precomputed once in the constructor: every cell index is
+sorted by `x + y + z`, the standard isometric painter's order. A stable sort
+keeps equally deep cells in index order.
 
-## Tiles
+## Drawing
 
-`Tile` holds an `sf::Sprite` and a `TileType`. Its origin is the centre of the
-texture and it is scaled so its width is exactly `config::tileWidth`, which
-keeps the footprint consistent for any source resolution. `Map` copies prototype
-tiles out of the `TileAtlas` when a cell is filled, so tiles never share mutable
-state. `TileType::VOID` is a command, not stored: placing it writes
-`TileType::EMPTY` and restores the transparent empty sprite.
+Each non-empty cell is an `sf::ConvexShape` diamond of `config::tileWidth` x
+`config::tileHeight`, centred on the precomputed cell position. `Map::draw()`
+creates the diamond once, walks the painter's order, and sets its position and
+fill colour per cell; `colorOf()` maps a `TileType` to that colour.
 
-## Player and idle animation
+`drawHover()` draws the same diamond with `config::hoverAlpha` only over an
+empty, in-bounds cell, and `drawOutline()` draws the grid lines of the active z
+level. The grid borders sit half a cell away from the cell centres.
 
-`Player` is created by `GameStateEditor` on the centre cell and drawn after the
-map. Its sheet (`assets/player.png`) is one horizontal strip of square frames:
-
-* frame size = sheet height, frame count = sheet width / sheet height;
-* origin = bottom centre, so the feet land on the tile centre returned by
-  `Map::gridToScreen()`;
-* the sprite is scaled so one frame is `config::playerScreenHeight` (64 px) tall;
-* `update(dt)` accumulates time and advances the frame every
-  `config::playerIdleFrameSeconds` (0.12 s), wrapping to frame 0.
-
-This is the layout of a Diablo II animation conversion cropped to one idle
-direction, so the real art can be dropped in unchanged. With no art file, the
-generated four-frame figure bobs up and down, which keeps the animation visible
-and testable.
-
-The player is currently decorative (no movement) and is drawn on top of all
-tiles; proper per-tile occlusion would be the next step if he starts moving
-behind buildings.
+`TileType::VOID` is a command rather than a stored state: `placeTile()` writes
+`TileType::EMPTY` for it.
 
 ## Editor
 
-`GameStateEditor` owns the `Map` and the `Player`. It keeps a world view (centred
-on the map, zoomed by `config::editorViewZoom`) and a pixel-perfect GUI view for
-future HUD elements. Input:
+`Game` keeps the selected tile type (grass by default) and the active z level
+(0 by default). Input:
 
-* `Escape` returns to the title screen;
-* `G` / `H` lower / raise the active z level (clamped to the map's layer count);
-* `0` selects clear, `1`-`7` select a tile type;
-* left click places the selection, right click clears;
-* every update, the mouse position is unprojected to refresh the hover preview.
+* `Escape` quits;
+* `G` / `H` lower / raise the active z level (clamped to the layer count);
+* `0` selects the eraser, `1`-`7` select a tile type through `kTileKeys`;
+* left click places the selection, right click clears the cell.
+
+The mouse position is converted with the world view (`mapPixelToCoords`) and
+unprojected on the active z level, so the hover preview and the click land on
+the same cell. The window is authored at 1920x1080, shrunk if the desktop is
+smaller, and the view is centred on the map and zoomed by
+`config::editorViewZoom`.
+
+## Frame
+
+```
+poll events -> handle close / keys / clicks
+            -> refresh hover from the mouse position
+            -> clear
+            -> draw tiles, hover, outline
+            -> display
+```
+
+There is no `update(dt)` step because nothing animates or simulates.
 
 ## Tests
 
@@ -131,8 +96,11 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
+The test checks projection round-trips, clicks inside a diamond, neighbour
+spacing, the z shift and the grid outline corners.
+
 ## Known limitations
 
 * Maps are not saved or loaded.
-* The player never moves and is not depth-sorted against the tiles.
-* The map size, zoom and animation timing are compile-time constants.
+* Tiles are flat coloured diamonds; there is no texture or sprite pipeline.
+* Map size, zoom and tile colours are compile-time constants.

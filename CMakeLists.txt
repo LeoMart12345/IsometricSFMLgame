@@ -38,14 +38,8 @@ if(ISO_BUILD_GAME)
 
   set(ISO_SOURCES
     IsometricSFMLgame/src/main.cpp
-    IsometricSFMLgame/src/core/asset_path.cpp
     IsometricSFMLgame/src/core/game.cpp
-    IsometricSFMLgame/src/core/texture_manager.cpp
-    IsometricSFMLgame/src/game/player.cpp
     IsometricSFMLgame/src/map/map.cpp
-    IsometricSFMLgame/src/map/tile.cpp
-    IsometricSFMLgame/src/states/game_state_editor.cpp
-    IsometricSFMLgame/src/states/game_state_start.cpp
   )
 
   add_executable(IsometricGame ${ISO_SOURCES})
@@ -57,14 +51,6 @@ if(ISO_BUILD_GAME)
   else()
     target_compile_options(IsometricGame PRIVATE -Wall -Wextra -Wpedantic -Wshadow)
   endif()
-
-  # The game resolves art through core/asset_path.cpp, which also searches next
-  # to and above the executable, so these copies are only a convenience.
-  add_custom_command(TARGET IsometricGame POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-      "${CMAKE_CURRENT_SOURCE_DIR}/assets"
-      "$<TARGET_FILE_DIR:IsometricGame>/assets"
-    COMMENT "Copying assets next to the executable")
 
   if(WIN32 AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.21)
     add_custom_command(TARGET IsometricGame POST_BUILD

@@ -148,30 +148,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\core\asset_path.cpp" />
     <ClCompile Include="src\core\game.cpp" />
-    <ClCompile Include="src\core\texture_manager.cpp" />
-    <ClCompile Include="src\game\player.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\map\map.cpp" />
-    <ClCompile Include="src\map\tile.cpp" />
-    <ClCompile Include="src\states\game_state_editor.cpp" />
-    <ClCompile Include="src\states\game_state_start.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\core\asset_path.hpp" />
     <ClInclude Include="src\core\constants.hpp" />
     <ClInclude Include="src\core\game.hpp" />
-    <ClInclude Include="src\core\texture_manager.hpp" />
-    <ClInclude Include="src\game\player.hpp" />
     <ClInclude Include="src\map\grid_geometry.hpp" />
     <ClInclude Include="src\map\map.hpp" />
-    <ClInclude Include="src\map\tile.hpp" />
-    <ClInclude Include="src\map\tile_atlas.hpp" />
     <ClInclude Include="src\map\tile_type.hpp" />
-    <ClInclude Include="src\states\game_state.hpp" />
-    <ClInclude Include="src\states\game_state_editor.hpp" />
-    <ClInclude Include="src\states\game_state_start.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\tests\grid_geometry_test.cpp" />

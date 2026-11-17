@@ -10,12 +10,6 @@
     <Filter Include="src\map">
       <UniqueIdentifier>{4a30f8de-0d6c-4c1d-9c58-1f7c6a1d0003}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\states">
-      <UniqueIdentifier>{4a30f8de-0d6c-4c1d-9c58-1f7c6a1d0004}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\game">
-      <UniqueIdentifier>{4a30f8de-0d6c-4c1d-9c58-1f7c6a1d0008}</UniqueIdentifier>
-    </Filter>
     <Filter Include="tests">
       <UniqueIdentifier>{4a30f8de-0d6c-4c1d-9c58-1f7c6a1d0006}</UniqueIdentifier>
     </Filter>
@@ -27,46 +21,19 @@
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\asset_path.cpp">
-      <Filter>src\core</Filter>
-    </ClCompile>
     <ClCompile Include="src\core\game.cpp">
       <Filter>src\core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\texture_manager.cpp">
-      <Filter>src\core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\game\player.cpp">
-      <Filter>src\game</Filter>
     </ClCompile>
     <ClCompile Include="src\map\map.cpp">
       <Filter>src\map</Filter>
     </ClCompile>
-    <ClCompile Include="src\map\tile.cpp">
-      <Filter>src\map</Filter>
-    </ClCompile>
-    <ClCompile Include="src\states\game_state_editor.cpp">
-      <Filter>src\states</Filter>
-    </ClCompile>
-    <ClCompile Include="src\states\game_state_start.cpp">
-      <Filter>src\states</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\core\asset_path.hpp">
-      <Filter>src\core</Filter>
-    </ClInclude>
     <ClInclude Include="src\core\constants.hpp">
       <Filter>src\core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\game.hpp">
       <Filter>src\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\texture_manager.hpp">
-      <Filter>src\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\game\player.hpp">
-      <Filter>src\game</Filter>
     </ClInclude>
     <ClInclude Include="src\map\grid_geometry.hpp">
       <Filter>src\map</Filter>
@@ -74,23 +41,8 @@
     <ClInclude Include="src\map\map.hpp">
       <Filter>src\map</Filter>
     </ClInclude>
-    <ClInclude Include="src\map\tile.hpp">
-      <Filter>src\map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\map\tile_atlas.hpp">
-      <Filter>src\map</Filter>
-    </ClInclude>
     <ClInclude Include="src\map\tile_type.hpp">
       <Filter>src\map</Filter>
-    </ClInclude>
-    <ClInclude Include="src\states\game_state.hpp">
-      <Filter>src\states</Filter>
-    </ClInclude>
-    <ClInclude Include="src\states\game_state_editor.hpp">
-      <Filter>src\states</Filter>
-    </ClInclude>
-    <ClInclude Include="src\states\game_state_start.hpp">
-      <Filter>src\states</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

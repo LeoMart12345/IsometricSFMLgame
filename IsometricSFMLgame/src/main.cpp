@@ -2,18 +2,13 @@
 #include <cstdlib>
 #include <exception>
 #include <iostream>
-#include <memory>
 
-#include "core/asset_path.hpp"
 #include "core/game.hpp"
-#include "states/game_state_start.hpp"
 
 namespace
 {
-// SFML aborts the process (one line of text, then a core dump) when it cannot
-// reach a display server, which makes a headless run look like a crash. Check
-// first and report it like any other start-up failure. Only the Unix ports need
-// this: Windows and macOS always provide a display.
+// SFML cannot create a window without a display server. Checking first turns
+// "Failed to open X11 display" into a clear message and a non-zero exit code.
 bool hasDisplayServer()
 {
 #if defined(__linux__) || defined(__unix__)
@@ -27,14 +22,10 @@ bool hasDisplayServer()
 }
 } // namespace
 
-int main(int argc, char** argv)
+int main()
 {
     try
     {
-        // Lets asset lookups work no matter which directory the executable is
-        // started from (Visual Studio, double click, terminal, ...).
-        assets::initialize(argc > 0 ? argv[0] : nullptr);
-
         if (!hasDisplayServer())
         {
             std::cerr << "Fatal error: no display server found (neither DISPLAY nor WAYLAND_DISPLAY is set)\n";
@@ -42,8 +33,7 @@ int main(int argc, char** argv)
         }
 
         Game game;
-        game.pushState(std::make_unique<GameStateStart>(game));
-        game.gameLoop();
+        game.run();
     }
     catch (const std::exception& exception)
     {

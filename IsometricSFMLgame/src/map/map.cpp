@@ -10,40 +10,69 @@
 
 namespace
 {
-const Tile& emptyTile(const TileAtlas& atlas)
-{
-    const auto it = atlas.find(TileType::EMPTY);
-    if (it == atlas.end())
-        throw std::invalid_argument("Map requires a tile atlas that contains TileType::EMPTY");
+constexpr sf::Color outlineColor{255, 255, 255, 60};
 
-    return it->second;
+// One tile, centred on the origin.
+sf::ConvexShape makeDiamond()
+{
+    sf::ConvexShape diamond(4);
+    diamond.setPoint(0, {0.f, -iso::halfTileHeight});
+    diamond.setPoint(1, {iso::halfTileWidth, 0.f});
+    diamond.setPoint(2, {0.f, iso::halfTileHeight});
+    diamond.setPoint(3, {-iso::halfTileWidth, 0.f});
+    return diamond;
 }
 
-constexpr sf::Color outlineColor{255, 255, 255, 60};
+sf::Color colorOf(TileType type)
+{
+    switch (type)
+    {
+    case TileType::GRASS:
+        return {110, 190, 90};
+    case TileType::FOREST:
+        return {40, 110, 60};
+    case TileType::WATER:
+        return {70, 130, 220};
+    case TileType::RESIDENTIAL:
+        return {220, 180, 90};
+    case TileType::COMMERCIAL:
+        return {160, 90, 220};
+    case TileType::INDUSTRIAL:
+        return {130, 130, 130};
+    case TileType::ROAD:
+        return {80, 80, 90};
+    case TileType::VOID:
+    case TileType::EMPTY:
+        return sf::Color::Transparent;
+    }
+
+    return sf::Color::Transparent;
+}
 } // namespace
 
-Map::Map(int width, int height, int layers, const TileAtlas& tileAtlas)
-    : width_(width), height_(height), layers_(layers), tileAtlas_(tileAtlas), hoverTile_(emptyTile(tileAtlas))
+Map::Map(int width, int height, int layers) : width_(width), height_(height), layers_(layers)
 {
     if (width_ <= 0 || height_ <= 0 || layers_ <= 0)
         throw std::invalid_argument("Map dimensions must be positive");
 
-    // Every cell starts empty; placeTile() overwrites the cells the editor
-    // fills in later.
-    tiles_.assign(static_cast<std::size_t>(width_) * height_ * layers_, emptyTile(tileAtlas_));
+    const std::size_t tileCount = static_cast<std::size_t>(width_) * height_ * layers_;
 
-    // Tiles never move and never change depth, so the painter's order (back to
-    // front, by increasing x + y + z) is computed once here. A stable sort
-    // keeps equally deep cells in index order.
-    drawOrder_.resize(tiles_.size());
-    std::iota(drawOrder_.begin(), drawOrder_.end(), std::size_t{0});
-    std::stable_sort(drawOrder_.begin(), drawOrder_.end(),
-                     [this](std::size_t lhs, std::size_t rhs) { return depthOf(lhs) < depthOf(rhs); });
+    // Every cell starts empty; placeTile() fills the cells the editor touches.
+    tiles_.assign(tileCount, TileType::EMPTY);
+    positions_.resize(tileCount);
 
     for (int z = 0; z < layers_; ++z)
         for (int y = 0; y < height_; ++y)
             for (int x = 0; x < width_; ++x)
-                tiles_[index(x, y, z)].setPosition(gridToScreen(x, y, z));
+                positions_[index(x, y, z)] = gridToScreen(x, y, z);
+
+    // Tiles never move and never change depth, so the painter's order (back to
+    // front, by increasing x + y + z) is computed once here. A stable sort
+    // keeps equally deep cells in index order.
+    drawOrder_.resize(tileCount);
+    std::iota(drawOrder_.begin(), drawOrder_.end(), std::size_t{0});
+    std::stable_sort(drawOrder_.begin(), drawOrder_.end(),
+                     [this](std::size_t lhs, std::size_t rhs) { return depthOf(lhs) < depthOf(rhs); });
 }
 
 void Map::placeTile(int x, int y, int z, TileType type)
@@ -51,57 +80,48 @@ void Map::placeTile(int x, int y, int z, TileType type)
     if (!isInBounds(x, y, z))
         return;
 
-    // VOID is the editor's eraser, so it stores the empty tile instead.
-    const TileType storedType = (type == TileType::VOID) ? TileType::EMPTY : type;
-
-    // The atlas defines which types exist; anything unknown leaves the cell as
-    // it is.
-    const auto prototype = tileAtlas_.find(storedType);
-    if (prototype == tileAtlas_.end())
-        return;
-
-    Tile& tile = tiles_[index(x, y, z)];
-    if (tile.getType() == storedType)
-        return;
-
-    // Copy the prototype so the atlas keeps its untouched template.
-    tile = prototype->second;
-    tile.setPosition(gridToScreen(x, y, z));
+    // VOID is the editor's eraser, so it stores the empty cell instead.
+    tiles_[index(x, y, z)] = (type == TileType::VOID) ? TileType::EMPTY : type;
 }
 
 void Map::updateHover(const sf::Vector3i& position, TileType type)
 {
-    // The cell has to be in bounds: isEmpty() reports out-of-bounds cells as
-    // empty, so without the bounds check the preview would float outside the
-    // map. VOID is the eraser and never gets a preview.
-    const auto prototype = tileAtlas_.find(type);
-    const bool canPlace = isInBounds(position.x, position.y, position.z) && type != TileType::VOID &&
-                          isEmpty(position.x, position.y, position.z) && prototype != tileAtlas_.end();
-
-    hoverActive_ = canPlace;
-    if (!canPlace)
-        return;
-
-    hoverTile_ = prototype->second;
-    hoverTile_.setPosition(gridToScreen(position.x, position.y, position.z));
-    hoverTile_.setAlpha(config::hoverAlpha);
+    // The preview is only useful over an empty in-bounds cell; the eraser has
+    // nothing to preview.
+    hoverActive_ = type != TileType::VOID && isInBounds(position.x, position.y, position.z) &&
+                   tiles_[index(position.x, position.y, position.z)] == TileType::EMPTY;
+    hoverCell_ = position;
+    hoverType_ = type;
 }
 
 void Map::draw(sf::RenderTarget& target) const
 {
+    sf::ConvexShape diamond = makeDiamond();
+
     for (const std::size_t tileIndex : drawOrder_)
     {
-        // Empty cells only hold transparent placeholder art, so skipping them
-        // saves a draw call per unfilled cell.
-        if (const Tile& tile = tiles_[tileIndex]; tile.getType() != TileType::EMPTY)
-            tile.draw(target);
+        const TileType type = tiles_[tileIndex];
+        if (type == TileType::EMPTY)
+            continue;
+
+        diamond.setPosition(positions_[tileIndex]);
+        diamond.setFillColor(colorOf(type));
+        target.draw(diamond);
     }
 }
 
 void Map::drawHover(sf::RenderTarget& target) const
 {
-    if (hoverActive_)
-        hoverTile_.draw(target);
+    if (!hoverActive_)
+        return;
+
+    sf::ConvexShape diamond = makeDiamond();
+    sf::Color color = colorOf(hoverType_);
+    color.a = config::hoverAlpha;
+
+    diamond.setPosition(gridToScreen(hoverCell_.x, hoverCell_.y, hoverCell_.z));
+    diamond.setFillColor(color);
+    target.draw(diamond);
 }
 
 void Map::drawOutline(sf::RenderTarget& target, int z) const
@@ -154,16 +174,6 @@ sf::Vector2f Map::getCenter() const
     return screenPosition((static_cast<float>(width_) - 1.f) / 2.f, (static_cast<float>(height_) - 1.f) / 2.f, 0);
 }
 
-int Map::getWidth() const
-{
-    return width_;
-}
-
-int Map::getHeight() const
-{
-    return height_;
-}
-
 int Map::getLayers() const
 {
     return layers_;
@@ -194,12 +204,3 @@ sf::Vector2f Map::screenPosition(float x, float y, int z) const
 
     return {screen.x, screen.y};
 }
-
-bool Map::isEmpty(int x, int y, int z) const
-{
-    if (!isInBounds(x, y, z))
-        return true;
-
-    return tiles_[index(x, y, z)].getType() == TileType::EMPTY;
-}
-

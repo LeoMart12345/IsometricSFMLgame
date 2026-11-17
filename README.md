@@ -1,56 +1,29 @@
 # IsometricSFMLgame
 
-<img width="536" height="451" alt="Map editor screenshot" src="https://github.com/user-attachments/assets/f57ec7b4-5a26-4d64-a69d-4386b79c274b" />
-
 A small Diablo-style isometric map editor written in **C++20** with **SFML 3**.
 
 Left click stamps the selected tile, right click clears a cell, `G`/`H` switch
-between the three z levels, and the player character stands in the middle of the
-map playing his idle animation.
-
-Game assets are not mine.
+between the three z levels, and `0`-`7` choose what to place. Tiles are drawn as
+coloured isometric diamonds, so the editor needs no art files.
 
 ## How the pieces connect
 
-`Game` owns the window and every resource; states only borrow them. Solid
-arrows mean ownership or a call, dotted arrows mean a borrowed reference.
+`Game` owns the window and the map, and runs the loop. Solid arrows mean
+ownership or a call.
 
 ```mermaid
 flowchart TD
-    main["main.cpp<br/>asset lookup + display check"]
-    game["Game<br/>window · textures · tile atlas · state stack"]
-    tm["TextureManager<br/>owns every sf::Texture"]
-    atlas["TileAtlas<br/>prototype Tile per TileType"]
-    start["GameStateStart<br/>title screen"]
-    editor["GameStateEditor<br/>map editor"]
-    map["Map<br/>layered tiles + draw order"]
-    tile["Tile<br/>sprite + TileType"]
+    main["main.cpp<br/>display check"]
+    game["Game<br/>window · input · view · loop"]
+    map["Map<br/>TileType grid · placement · painter order"]
     geo["grid_geometry<br/>project / unproject (no SFML)"]
-    player["Player<br/>idle animation"]
-    assets["assets/*.png<br/>generated placeholders if missing"]
+    type["tile_type.hpp<br/>the placeable tile kinds"]
 
     main -->|constructs| game
-    main -->|pushes| start
-    game -->|owns| tm
-    game -->|owns| atlas
-    game -->|pushState / changeState| start
-    game -->|pushState / changeState| editor
-    start -.->|borrow window / textures| game
-    editor -.->|borrow window / textures / atlas| game
-    start -->|Enter / Space| editor
-    editor -->|Escape| start
-    editor -->|owns| map
-    editor -->|owns| player
-    map -->|copies prototypes| atlas
+    game -->|owns| map
     map -->|uses| geo
-    map -->|stores| tile
-    tile -->|references texture| tm
-    player -->|references texture| tm
-    tm -->|loads| assets
+    map -->|stores| type
 ```
-
-`Game` declares the resources before the state stack, so they are destroyed
-*after* the states: no `Map` or `Player` can outlive the texture it draws.
 
 ## Requirements
 
@@ -119,27 +92,13 @@ ctest --test-dir build --output-on-failure
 
 | Input | Action |
 |---|---|
-| `Enter` / `Space` (title screen) | Open the editor |
-| `Escape` (title screen) | Quit |
-| `Escape` (editor) | Back to the title screen |
+| `Escape` | Quit |
 | `H` / `G` | Raise / lower the active z level |
-| `0` | Select "clear" (right click also clears) |
+| `0` | Select the eraser (left click also clears) |
 | `1`–`7` | Grass, Forest, Water, Residential, Commercial, Industrial, Road |
 | Left click | Place the selected tile on the active z level |
 | Right click | Clear the clicked cell |
 | Mouse move | Translucent preview of the placement |
-
-## Assets
-
-Art is loaded from `assets/` (see `assets/README.md`). Missing files are not
-fatal: tiles get generated diamond placeholders and the player gets a generated
-four-frame idle strip, so the game always starts and the animation still runs.
-One summary block lists the missing files on the console.
-
-The player uses `assets/player.png`, a horizontal strip of square frames (an
-idle row cropped from a Diablo II conversion works as-is). The on-screen height
-of a frame and the frame time are `config::playerScreenHeight` and
-`config::playerIdleFrameSeconds` in `src/core/constants.hpp`.
 
 ## Project layout
 
@@ -151,15 +110,12 @@ scripts/build-linux.sh      Bootstraps SFML 3 + X11 headers, builds and tests
 IsometricSFMLgame/          Visual Studio project
   src/
     main.cpp                Entry point
-    core/                   Window/state stack, assets and textures, constants
-    map/                    Map, tiles, tile atlas, pure projection math
-    game/                   Player idle animation
-    states/                 Title screen and map editor
+    core/                   Window, input and the frame loop
+    map/                    Tile storage, drawing and projection math
 tests/
   grid_geometry_test.cpp    Projection/unprojection checks
 docs/
   ARCHITECTURE.md           How the pieces fit together
-assets/                     Drop-in art (nothing here is required)
 ```
 
 Include paths are rooted at `src/`, so headers are included as
@@ -167,6 +123,6 @@ Include paths are rooted at `src/`, so headers are included as
 
 ## Status / limitations
 
-* The player is decorative: he stands on the centre tile and plays his idle
-  animation, but does not move yet.
 * Maps are not saved or loaded; the editor is a sandbox.
+* Tiles are flat coloured diamonds; there is no texture or sprite pipeline.
+* Map size, zoom and tile colours are compile-time constants.

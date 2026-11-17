@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <vector>
 
-#include "map/tile_atlas.hpp"
 #include "map/tile_type.hpp"
 
 // A layered isometric tile map.
@@ -15,20 +14,18 @@
 //   gridToScreen(x, y, z) -> world position of the centre of cell (x, y) at level z
 //   screenToGrid(world, z) -> the cell whose centre is closest to `world`
 //
-// The map owns its tiles but not the textures: every tile is copied from the
-// TileAtlas that is passed in.
+// Cells store only a TileType; Map draws each one as a coloured diamond.
 class Map
 {
 public:
-    // `tileAtlas` must contain TileType::EMPTY and outlive the Map.
-    Map(int width, int height, int layers, const TileAtlas& tileAtlas);
+    Map(int width, int height, int layers);
 
     // Stores `type` in a cell; TileType::VOID empties the cell again.
-    // Out-of-bounds positions are ignored, as are types the atlas does not know.
+    // Out-of-bounds positions are ignored.
     void placeTile(int x, int y, int z, TileType type);
 
-    // Shows a translucent preview of `type` at `position`. Only empty in-bounds
-    // cells get a preview, so calling this every frame also hides a stale one.
+    // Shows a translucent preview of `type` at `position`. Out-of-bounds cells,
+    // the eraser and cells that already hold a tile get no preview.
     void updateHover(const sf::Vector3i& position, TileType type);
 
     // Draws back to front, so nearer cells cover the cells behind them.
@@ -44,13 +41,11 @@ public:
     // World position of the centre of the whole map.
     [[nodiscard]] sf::Vector2f getCenter() const;
 
-    [[nodiscard]] int getWidth() const;
-    [[nodiscard]] int getHeight() const;
     [[nodiscard]] int getLayers() const;
 
+private:
     [[nodiscard]] bool isInBounds(int x, int y, int z) const;
 
-private:
     // Position of a cell in the flat tiles_ vector.
     [[nodiscard]] std::size_t index(int x, int y, int z) const;
 
@@ -62,18 +57,16 @@ private:
     // cell borders sit half a cell away from the cell centres.
     [[nodiscard]] sf::Vector2f screenPosition(float x, float y, int z) const;
 
-    // True for empty cells and for out-of-bounds positions.
-    [[nodiscard]] bool isEmpty(int x, int y, int z) const;
-
     int width_;
     int height_;
     int layers_;
-    std::vector<Tile> tiles_;
+    std::vector<TileType> tiles_;
+    std::vector<sf::Vector2f> positions_;
 
     // Painter's-algorithm order, precomputed once because tiles never move.
     std::vector<std::size_t> drawOrder_;
 
-    const TileAtlas& tileAtlas_;
-    Tile hoverTile_;
+    sf::Vector3i hoverCell_{-1, -1, -1};
+    TileType hoverType_ = TileType::EMPTY;
     bool hoverActive_ = false;
 };
