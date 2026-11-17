@@ -7,12 +7,13 @@ stack, the isometric projection and the drawing order.
 
 | Folder | Responsibility |
 |---|---|
-| `src/core` | Game shell: window, frame loop, state stack, input polling, texture loading, asset path resolution, tunables (`constants.hpp`). |
+| `src/core` | Game shell: window, frame loop, state stack, input polling, texture loading, asset path resolution, tunables (`constants.hpp`), assertions (`assert.hpp`) and the seeded PCG32 RNG (`rng.hpp`). |
+| `src/game` | The SFML-free simulation: `stats` (attributes, derived values, experience curve), `combat` (hit chance, damage, resistances), `actor` (health, mana, levels, cooldown, movement) and `pathfinding` (A*). |
 | `src/states` | `GameState` interface plus the two screens (`GameStateStart`, `GameStateEditor`). |
-| `src/map` | `Map` (layered tiles, hover preview, draw order), `Tile`, `TileAtlas`, `TileType`, and `grid_geometry.hpp` — the SFML-free projection math. |
+| `src/map` | `Map` (layered tiles, hover preview, draw order), `Tile`, `TileAtlas`, `TileType`, `TileGrid` (plain data grid for the simulation), `tile_properties.hpp` (move cost, walkability) and `grid_geometry.hpp` — the SFML-free projection math. |
 | `src/ui` | Reusable widgets. Currently `Button`. |
 | `src/animation` | Sprite-sheet helpers: `Animation` (frame range) and `AnimationHandler` (advances the visible frame). |
-| `tests` | Header-only tests for the projection math. |
+| `tests` | Headless test suites (see [Tests](#tests)); no SFML, no window. |
 
 Headers are included relative to `src/` (for example `#include "map/tile.hpp"`),
 so the include directory is `IsometricSFMLgame/src`.
@@ -136,6 +137,12 @@ references, which is why the atlas and the texture manager outlive every state.
 touching the prototypes.
 
 ## Frame loop
+
+The window is created from `config::windowWidth` × `config::windowHeight`
+(1920×1080), clamped to the desktop size reported by
+`sf::VideoMode::getDesktopMode()` so it still fits on smaller or scaled screens.
+Every state sizes its views from `window.getSize()`, so nothing else depends on
+the requested size.
 
 ```mermaid
 sequenceDiagram
@@ -299,12 +306,20 @@ queries work. Two details matter:
    `x64/Debug/`, `build/`, `build/Debug/`, ...),
 3. the original relative path (so the error message shows what was expected).
 
-`Game::loadTextures()` logs a warning and calls
-`TextureManager::createPlaceholder()` when a file is missing, generating a
-solid-colour diamond tile, so the game is playable with an empty `assets/`
-folder.
+`Game::loadTextures()` probes the filesystem before asking SFML to decode
+anything (`std::filesystem::is_regular_file()`), because a failed
+`sf::Texture::loadFromFile()` prints a three line error per file — with the art
+files absent that turned a normal start-up into a wall of red text. Missing
+files are collected and reported once, as a group, and each one is replaced by
+`TextureManager::createPlaceholder()`, a solid-colour diamond, so the game is
+playable with an empty `assets/` folder. A file that exists but cannot be
+decoded is still reported by `TextureManager::loadTexture()`; that is a broken
+asset rather than an expected state.
 
 ## Tests
+
+The simulation layer is deliberately free of SFML so it can be tested headlessly;
+each suite is a separate executable registered with CTest.
 
 `tests/grid_geometry_test.cpp` includes `map/grid_geometry.hpp` only and checks:
 
@@ -313,8 +328,57 @@ folder.
 * neighbour spacing and the z offset,
 * the grid outline corners coincide with the outer diamond vertices.
 
+`tests/tile_grid_test.cpp` covers the plain data grid the simulation runs on:
+out-of-bounds reads are safe (writes are rejected, `at()`/`index()` assert),
+`TileType::VOID` is never stored, and walkability/move cost come from
+`tile_properties.hpp`.
+
+`tests/pathfinding_test.cpp` compares A* against an independent, deliberately
+naive Dijkstra over the same movement rules (8 directions, no corner cutting,
+terrain cost), including a 60-round deterministic fuzz test over random maps.
+It also pins down the `PathResult` contract: `reachedGoal` means the actor is
+standing *on* the goal, `path` contains the cells to step through.
+
+`tests/game_logic_test.cpp` covers `stats`, `combat` and `actor`: the experience
+curve round-trips, hit chance stays inside 5-95% and never drops when attack
+rating rises, armor/resistance only ever reduce damage, the same seed replays the
+same fight, and a full monster-versus-player fight is played out headlessly.
+
 Build and run with
 `cmake -S . -B build -DISO_BUILD_GAME=OFF && cmake --build build && ctest --test-dir build --output-on-failure`.
+
+Two rules the tests rely on and that new simulation code should keep:
+
+* **Determinism.** `iso::Rng` is the only source of randomness. `resolveAttack()`
+  always consumes exactly three rolls (hit, damage, critical) so a seed replays a
+  session no matter which attacks land.
+* **Assert relationships, not magic numbers.** A test saying "more vitality means
+  more health" survives balance tuning; a test asserting `maxHealth == 137` does
+  not.
+
+## Building and smoke-testing the graphical binary
+
+`scripts/build-linux.sh` prepares everything the CMake build needs on Linux
+without root: it extracts the missing X11/GL/UDev `-devel` RPMs into a private
+sysroot (`dnf` + `rpm2cpio`), builds SFML 3 shared into a private prefix, then
+configures, builds and runs `ctest` for this project. Re-running it is cheap
+because each stage is skipped when it is already done.
+
+The graphical executable is verified by running it against a virtual X server
+and grabbing the framebuffer (`XGetImage`), which exercises the whole chain —
+window creation, GL context, texture atlas with generated placeholders,
+projection, drawing order, and event handling:
+
+```bash
+Xvfb :99 -screen 0 1920x1080x24 &
+DISPLAY=:99 ./build/IsometricGame      # title screen; Enter opens the editor
+```
+
+Known-harmless messages in such a session: `TextEntered event won't be able to
+return unicode` (no input method) and `Setting vertical sync not supported`
+(software GL). With an empty `assets/` folder the game prints one `[assets] ...`
+block listing the files it replaced with generated placeholders; that is
+expected and not an error.
 
 ## Not wired up yet
 
