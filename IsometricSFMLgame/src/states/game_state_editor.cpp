@@ -12,8 +12,7 @@ GameStateEditor::GameStateEditor(Game& game)
       map_(static_cast<int>(config::mapWidth), static_cast<int>(config::mapHeight),
            static_cast<int>(config::mapLayers), game.tileAtlas()),
       player_(game.textures().getRef("player"),
-              map_.gridToScreen(map_.getWidth() / 2, map_.getHeight() / 2, 0)),
-      currentZLevel_(0)
+              map_.gridToScreen(map_.getWidth() / 2, map_.getHeight() / 2, 0))
 {
     const sf::Vector2u windowSize = game.window().getSize();
     const sf::Vector2f size{static_cast<float>(windowSize.x), static_cast<float>(windowSize.y)};
@@ -87,24 +86,25 @@ void GameStateEditor::placeTileAtMouse(const sf::Event::MouseButtonPressed& mous
     if (mouse.button != sf::Mouse::Button::Left && mouse.button != sf::Mouse::Button::Right)
         return;
 
-    // Convert with the world view, otherwise the click would be mapped with
-    // the GUI view's (unzoomed) transform and land on the wrong tile.
-    const sf::Vector2f worldPos = game_.window().mapPixelToCoords(mouse.position, gameView_);
-    const sf::Vector3i gridPos = map_.screenToGrid(worldPos, currentZLevel_);
-
-    if (!map_.isInBounds(gridPos.x, gridPos.y, gridPos.z))
-        return;
-
+    // Right click is the eraser; placeTile() ignores clicks outside the map.
     const TileType type = (mouse.button == sf::Mouse::Button::Right) ? TileType::VOID : currentTileType_;
-    map_.placeTile(gridPos.x, gridPos.y, gridPos.z, type);
+    const sf::Vector3i cell = gridCellAt(mouse.position);
+
+    map_.placeTile(cell.x, cell.y, cell.z, type);
 }
 
 void GameStateEditor::updateHover()
 {
-    const sf::Vector2i mousePixel = sf::Mouse::getPosition(game_.window());
-    const sf::Vector2f mouseWorld = game_.window().mapPixelToCoords(mousePixel, gameView_);
-    const sf::Vector3i gridPos = map_.screenToGrid(mouseWorld, currentZLevel_);
-    map_.updateHover(gridPos, currentTileType_);
+    map_.updateHover(gridCellAt(sf::Mouse::getPosition(game_.window())), currentTileType_);
+}
+
+sf::Vector3i GameStateEditor::gridCellAt(sf::Vector2i pixelPosition) const
+{
+    // Convert with the world view, otherwise the click would be mapped with the
+    // GUI view's (unzoomed) transform and land on the wrong cell.
+    const sf::Vector2f worldPosition = game_.window().mapPixelToCoords(pixelPosition, gameView_);
+
+    return map_.screenToGrid(worldPosition, currentZLevel_);
 }
 
 void GameStateEditor::update(float dt)

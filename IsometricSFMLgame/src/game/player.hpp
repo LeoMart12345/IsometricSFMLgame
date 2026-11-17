@@ -18,15 +18,14 @@ public:
     // Map::gridToScreen()); the sprite is anchored at its bottom centre.
     Player(const sf::Texture& sheet, sf::Vector2f feetPosition);
 
-    void setFeetPosition(sf::Vector2f position);
-
     // Advances the idle animation. Safe to call with any dt.
     void update(float dt);
 
     void draw(sf::RenderTarget& target) const;
 
 private:
-    void showFrame();
+    // Shows the frame that frame_ points at.
+    void applyFrame();
 
     sf::Sprite sprite_;
     int frameSize_ = 1;  // width and height of one square frame in pixels

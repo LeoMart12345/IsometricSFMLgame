@@ -19,11 +19,19 @@
 
 namespace
 {
+// How a texture is faked when its art file is missing.
+enum class PlaceholderKind
+{
+    IsometricTile, // 2:1 diamond, so it lines up with the map grid
+    PlayerStrip,   // horizontal strip of square idle frames
+};
+
 struct TextureDefinition
 {
     const char* name;
     const char* file;
     sf::Color placeholderColor;
+    PlaceholderKind placeholder;
 };
 
 struct TileDefinition
@@ -33,17 +41,17 @@ struct TileDefinition
 };
 
 constexpr TextureDefinition kTextures[] = {
-    {"grass", "assets/pxArt.png", sf::Color(110, 190, 90, 255)},
-    {"forest", "assets/pxArt (1).png", sf::Color(40, 110, 60, 255)},
-    {"water", "assets/Block.png", sf::Color(70, 130, 220, 255)},
-    {"residential", "assets/Block.png", sf::Color(220, 180, 90, 255)},
-    {"commercial", "assets/Block.png", sf::Color(160, 90, 220, 255)},
-    {"industrial", "assets/Block.png", sf::Color(130, 130, 130, 255)},
-    {"road", "assets/Block.png", sf::Color(80, 80, 90, 255)},
-    {"empty", "assets/Empty.png", sf::Color(0, 0, 0, 0)},
-    {"background", "assets/background.jpeg", sf::Color(20, 26, 40, 255)},
-    {"blue", "assets/BlueBackground.png", sf::Color(45, 70, 140, 255)},
-    {"player", "assets/player.png", sf::Color(230, 170, 70, 255)},
+    {"grass", "assets/pxArt.png", sf::Color(110, 190, 90, 255), PlaceholderKind::IsometricTile},
+    {"forest", "assets/pxArt (1).png", sf::Color(40, 110, 60, 255), PlaceholderKind::IsometricTile},
+    {"water", "assets/Block.png", sf::Color(70, 130, 220, 255), PlaceholderKind::IsometricTile},
+    {"residential", "assets/Block.png", sf::Color(220, 180, 90, 255), PlaceholderKind::IsometricTile},
+    {"commercial", "assets/Block.png", sf::Color(160, 90, 220, 255), PlaceholderKind::IsometricTile},
+    {"industrial", "assets/Block.png", sf::Color(130, 130, 130, 255), PlaceholderKind::IsometricTile},
+    {"road", "assets/Block.png", sf::Color(80, 80, 90, 255), PlaceholderKind::IsometricTile},
+    {"empty", "assets/Empty.png", sf::Color(0, 0, 0, 0), PlaceholderKind::IsometricTile},
+    {"background", "assets/background.jpeg", sf::Color(20, 26, 40, 255), PlaceholderKind::IsometricTile},
+    {"blue", "assets/BlueBackground.png", sf::Color(45, 70, 140, 255), PlaceholderKind::IsometricTile},
+    {"player", "assets/player.png", sf::Color(230, 170, 70, 255), PlaceholderKind::PlayerStrip},
 };
 
 constexpr TileDefinition kTiles[] = {
@@ -105,11 +113,10 @@ void Game::loadTextures()
         {
             // loadTexture() reports a file that exists but cannot be decoded;
             // that is a broken asset, whereas a missing file just gets a
-            // generated stand-in so the game stays playable. The player needs a
-            // frame strip rather than a tile diamond.
+            // generated stand-in so the game stays playable.
             missing.emplace_back(std::string{"'"} + definition.name + "' from '" + definition.file + "'");
 
-            if (std::string{definition.name} == "player")
+            if (definition.placeholder == PlaceholderKind::PlayerStrip)
                 textures_.createPlayerPlaceholder(definition.name, definition.placeholderColor);
             else
                 textures_.createPlaceholder(definition.name, definition.placeholderColor);
@@ -143,18 +150,11 @@ void Game::pushState(std::unique_ptr<GameState> state)
 void Game::changeState(std::unique_ptr<GameState> state)
 {
     // Ignore a null request rather than tearing the state stack down for no
-    // reason (see popState() for the intended way to leave a screen).
+    // reason.
     if (!state)
         return;
 
     pendingState_ = std::move(state);
-    pendingPop_ = false;
-}
-
-void Game::popState()
-{
-    pendingState_.reset();
-    pendingPop_ = true;
 }
 
 void Game::gameLoop()
@@ -194,8 +194,8 @@ void Game::gameLoop()
         // Deferred so a state is never destroyed while it is executing.
         applyPendingTransition();
 
-        // Nothing left to draw (the last state popped itself and no replacement
-        // was queued): end the loop instead of spinning on an empty stack.
+        // No state left to draw: end the loop instead of spinning on an empty
+        // stack.
         if (!peekState() && !pendingState_)
         {
             window_.close();
@@ -211,19 +211,15 @@ GameState* Game::peekState()
 
 void Game::applyPendingTransition()
 {
-    if (pendingState_)
-    {
-        if (!states_.empty())
-            states_.pop_back();
+    if (!pendingState_)
+        return;
 
-        states_.push_back(std::move(pendingState_));
-    }
-    else if (pendingPop_ && !states_.empty())
-    {
+    // changeState() replaces the current state rather than stacking on top of
+    // it, which is all the title screen and the editor need.
+    if (!states_.empty())
         states_.pop_back();
-    }
 
-    pendingPop_ = false;
+    states_.push_back(std::move(pendingState_));
 }
 
 sf::RenderWindow& Game::window()

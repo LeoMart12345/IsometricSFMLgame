@@ -23,6 +23,10 @@ public:
 private:
     void handleKey(sf::Keyboard::Key key);
     void placeTileAtMouse(const sf::Event::MouseButtonPressed& mouse);
+
+    // The cell under a pixel in the window, on the current z level.
+    [[nodiscard]] sf::Vector3i gridCellAt(sf::Vector2i pixelPosition) const;
+
     void updateHover();
     void selectTile(TileType type);
 

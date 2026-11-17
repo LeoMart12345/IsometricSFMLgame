@@ -37,10 +37,10 @@ Include paths are rooted at `src/` (`#include "map/map.hpp"`).
 3. Call `update(dt)`, clear the window, call `draw(dt)`, `display()`.
 4. Apply a deferred state transition.
 
-State changes are deferred (`pendingState_` / `pendingPop_`) so a state can
-replace itself from inside its own callback without being destroyed while its
-member function is still running. If the stack becomes empty and nothing is
-pending, the loop closes the window instead of spinning.
+State changes are deferred (`pendingState_`) so a state can replace itself from
+inside its own callback without being destroyed while its member function is
+still running. If the stack becomes empty and nothing is pending, the loop closes
+the window instead of spinning.
 
 ## Resources
 

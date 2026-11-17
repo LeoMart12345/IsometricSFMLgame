@@ -18,13 +18,12 @@ class Tile
 public:
     Tile(const sf::Texture& texture, TileType type);
 
-    void setType(TileType type);
     [[nodiscard]] TileType getType() const;
 
     void setPosition(sf::Vector2f position);
 
     // 0 = fully transparent, 255 = fully opaque.
-    void setOpacity(std::uint8_t alpha);
+    void setAlpha(std::uint8_t alpha);
 
     void draw(sf::RenderTarget& target) const;
 

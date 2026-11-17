@@ -1,6 +1,7 @@
 // texture_manager.cpp
 #include "core/texture_manager.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -16,6 +17,30 @@ namespace
 // grid lines or with real 2:1 tile art.
 constexpr unsigned int kPlaceholderWidth = config::tileWidth;
 constexpr unsigned int kPlaceholderHeight = config::tileHeight;
+
+// Drawing helpers for the generated player art. They clip to the image, so the
+// shapes can be described with plain pixel coordinates and no bounds checks.
+void fillRect(sf::Image& image, int left, int top, int width, int height, sf::Color color)
+{
+    const sf::Vector2u imageSize = image.getSize();
+
+    for (int y = std::max(0, top); y < top + height && y < static_cast<int>(imageSize.y); ++y)
+    {
+        for (int x = std::max(0, left); x < left + width && x < static_cast<int>(imageSize.x); ++x)
+        {
+            image.setPixel(sf::Vector2u{static_cast<unsigned int>(x), static_cast<unsigned int>(y)}, color);
+        }
+    }
+}
+
+void fillCircle(sf::Image& image, int centerX, int centerY, int radius, sf::Color color)
+{
+    for (int offsetY = -radius; offsetY <= radius; ++offsetY)
+    {
+        const int halfWidth = static_cast<int>(std::sqrt(static_cast<double>(radius * radius - offsetY * offsetY)));
+        fillRect(image, centerX - halfWidth, centerY + offsetY, halfWidth * 2 + 1, 1, color);
+    }
+}
 } // namespace
 
 bool TextureManager::loadTexture(const std::string& name, const std::filesystem::path& filename)
@@ -66,21 +91,17 @@ void TextureManager::createPlaceholder(const std::string& name, sf::Color color)
 
 void TextureManager::createPlayerPlaceholder(const std::string& name, sf::Color color)
 {
-    const unsigned int frameCount = config::playerPlaceholderFrames;
-    const unsigned int frameSize = config::playerPlaceholderFrameSize;
+    constexpr unsigned int frameCount = config::playerPlaceholderFrames;
+    constexpr unsigned int frameSize = config::playerPlaceholderFrameSize;
 
     sf::Image image(sf::Vector2u{frameSize * frameCount, frameSize}, sf::Color::Transparent);
 
-    const sf::Vector2u imageSize = image.getSize();
-    const auto paint = [&image, imageSize, color](int x, int y)
-    {
-        if (x < 0 || y < 0)
-            return;
-
-        const auto position = sf::Vector2u{static_cast<unsigned int>(x), static_cast<unsigned int>(y)};
-        if (position.x < imageSize.x && position.y < imageSize.y)
-            image.setPixel(position, color);
-    };
+    // Frame layout (48x48, frame-local coordinates):
+    //   - body: a 15 px wide bar, 22 px tall, standing on the feet line
+    //   - head: a filled circle of radius 6, sitting just above the body
+    //   - feetY: 3 px above the bottom edge of the frame
+    constexpr int bodyHalfWidth = 7;
+    constexpr int headRadius = 6;
 
     const int centreX = static_cast<int>(frameSize) / 2;
     const int feetY = static_cast<int>(frameSize) - 3;
@@ -91,20 +112,13 @@ void TextureManager::createPlayerPlaceholder(const std::string& name, sf::Color 
 
         // Two idle poses, alternating every frame: the figure bobs up 2 px.
         const int bob = (frame % 2 == 0) ? 0 : 2;
-        const int bodyTop = feetY - 22 - bob;
-        const int headCentreY = bodyTop - 7;
 
-        for (int y = bodyTop; y <= feetY - bob; ++y)
-            for (int x = centreX - 7; x <= centreX + 7; ++x)
-                paint(frameX + x, y);
+        const int bodyBottom = feetY - bob;
+        const int bodyTop = bodyBottom - 22;
 
-        // Round head (radius 6) above the body.
-        for (int y = -6; y <= 6; ++y)
-        {
-            const int halfWidth = static_cast<int>(std::sqrt(36 - y * y));
-            for (int x = -halfWidth; x <= halfWidth; ++x)
-                paint(frameX + centreX + x, headCentreY + y);
-        }
+        fillRect(image, frameX + centreX - bodyHalfWidth, bodyTop, bodyHalfWidth * 2 + 1, bodyBottom - bodyTop + 1,
+                 color);
+        fillCircle(image, frameX + centreX, bodyTop - headRadius - 1, headRadius, color);
     }
 
     sf::Texture texture;

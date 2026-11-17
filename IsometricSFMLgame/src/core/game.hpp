@@ -25,17 +25,14 @@ public:
     Game(const Game&) = delete;
     Game& operator=(const Game&) = delete;
 
-    // Pushes a new state on top of the stack (the previous one keeps running
-    // underneath until it is popped).
+    // Pushes a new state on top of the stack (the states underneath keep their
+    // data but are not updated or drawn).
     void pushState(std::unique_ptr<GameState> state);
 
     // Replaces the topmost state. The swap happens at the end of the current
     // frame, so a state can safely request its own replacement from inside
     // handleInput()/update() without being destroyed while still executing.
     void changeState(std::unique_ptr<GameState> state);
-
-    // Pops the topmost state (also deferred to the end of the frame).
-    void popState();
 
     void gameLoop();
 
@@ -54,7 +51,6 @@ private:
     TileAtlas tileAtlas_;
 
     std::vector<std::unique_ptr<GameState>> states_;
-    std::unique_ptr<GameState> pendingState_;
-    bool pendingPop_ = false;
+    std::unique_ptr<GameState> pendingState_; // applied at the end of the frame
 };
 

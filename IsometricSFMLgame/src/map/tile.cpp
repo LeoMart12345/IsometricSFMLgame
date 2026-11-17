@@ -21,11 +21,6 @@ Tile::Tile(const sf::Texture& texture, TileType type)
     }
 }
 
-void Tile::setType(TileType type)
-{
-    type_ = type;
-}
-
 TileType Tile::getType() const
 {
     return type_;
@@ -36,7 +31,7 @@ void Tile::setPosition(sf::Vector2f position)
     sprite_.setPosition(position);
 }
 
-void Tile::setOpacity(std::uint8_t alpha)
+void Tile::setAlpha(std::uint8_t alpha)
 {
     sf::Color color = sprite_.getColor();
     color.a = alpha;
