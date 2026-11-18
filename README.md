@@ -32,7 +32,6 @@ flowchart TD
 | C++ compiler | C++20 | GCC 11+, Clang 14+, MSVC 19.30+ (VS 2022) |
 | SFML | **3.1** (3.0 also works) | SFML 2.x will **not** compile: the code uses the SFML 3 API |
 | CMake | 3.20+ | Optional, only for the CMake build |
-| Visual Studio | 2022 (v143) | Optional, `IsometricSFMLgame.sln` |
 
 ## Building
 
